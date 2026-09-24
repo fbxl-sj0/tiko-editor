@@ -132,8 +132,9 @@ function frmProjectOptions_OnCommand( _
         case IDC_FRMPROJECTOPTIONS_CMDSELECT
             if codeNotify = BN_CLICKED then
                 dim as DWSTRING wszProjectName = ""
+                dim as wstring * 32 wszDefaultExtension = APPEXTENSION
                 if gApp.IsNewProjectFlag = false then wszProjectName = gApp.ProjectName
-                dim pwszName as WString Ptr = AfxIFileSaveDialog(hwnd, wszProjectName, @wstr(APPEXTENSION), IDC_FRMPROJECTOPTIONS_CMDselect)
+                dim pwszName as WString Ptr = AfxIFileSaveDialog(hwnd, wszProjectName, @wszDefaultExtension, IDC_FRMPROJECTOPTIONS_CMDselect)
                 if pwszName then
                     AfxSetWindowText( GetDlgItem(hwnd, IDC_FRMPROJECTOPTIONS_TXTPROJECTPATH), pwszName )
                     CoTaskMemFree pwszName

@@ -236,12 +236,13 @@ function clsApp.SaveProject( byval bSaveAs as boolean = false ) as boolean
 
     dim wFilename as wstring * MAX_PATH
     dim wText     as wstring * MAX_PATH  
+    dim as wstring * 16 wszDefaultExtension = "gfbe"
     
     wFilename = this.ProjectFilename
     
     if bSaveAs then
         ' Display the Save File Dialog
-        dim pwszName as wstring ptr = AfxIFileSaveDialog(HWND_FRMMAIN, @wFilename, @wstr("gfbe"), IDM_PROJECTSAVE)
+        dim pwszName as wstring ptr = AfxIFileSaveDialog(HWND_FRMMAIN, @wFilename, @wszDefaultExtension, IDM_PROJECTSAVE)
         if pwszName then
             wFilename = *pwszName
             CoTaskMemFree(pwszName)

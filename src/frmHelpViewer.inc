@@ -774,6 +774,7 @@ function frmHelpViewer_Show( byval hWndParent as HWND ) as LRESULT
     dim pStream as CTextStream
     if pStream.Open(gConfig.HelpTableOfContents) = S_OK then
         dim as DWSTRING wst
+        dim as wstring * 1 wszEmptyString
         dim as long idx
         do until pStream.EOS
             wst = pStream.ReadLine
@@ -781,7 +782,7 @@ function frmHelpViewer_Show( byval hWndParent as HWND ) as LRESULT
             if len(wst) = 0 then continue do
             
             if left(wst, 7) = "TOPIC: " then
-                idx = Listbox_AddString( HWND_FRMHELPVIEWER_LEFTPANEL, @wstr("") )
+                idx = Listbox_AddString(HWND_FRMHELPVIEWER_LEFTPANEL, @wszEmptyString)
                 redim preserve gHelpViewer.Topics(idx)
                 redim preserve gHelpViewer.Filenames(idx)
                 gHelpViewer.Topics(idx) = mid(wst, 8)

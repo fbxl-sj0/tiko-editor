@@ -1,47 +1,60 @@
-# tiko editor
+# Tiko Editor
 
-## Programmer's Code Editor for the FreeBASIC Compiler
+Tiko is a FreeBASIC source editor. The native application is being rebuilt
+with the FreeBASIC runtime and gfxlib, using the bundled omaGUI toolkit for
+its interface.
 
+The native entry point is [src/tiko.bas](src/tiko.bas). The earlier Windows
+implementation is retained in `src/tiko_windows_legacy.bas` while its editor
+features are ported.
 
-Tiko is a small, fast, and easy to use code editor.
+## Native editor features
 
-Tiko is an all-in-one package including the latest Tiko editor, FreeBASIC compiler (32 and 64 bit compilers), Jose Roca's WinFBX (AFX) library, several Help files and all the necessary compiler Include files.
+- Tiko's File, Edit, Search, View, Project, Compile, Debug, and Help menus
+- The editor's left tool strip, grouped source explorer, document tabs, and
+  segmented status bar
+- Open and save FreeBASIC source files with a file dialog
+- Keep up to 12 source documents open, with dirty markers and discard prompts
+- Edit source with line numbers, FreeBASIC syntax colors, four-space Tab, and
+  automatic indentation after Return
+- Undo, redo, selection, copy, cut, paste, and Find Next
+- Build and run the active source file, with compiler and program output shown
+  in Tiko's output pane
+- Use Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+Shift+S, Ctrl+B, Ctrl+R, Ctrl+W, Ctrl+F,
+  and F3 for common commands
 
-Includes the complete FreeBASIC compiler and toolchain. Tiko Editor is preconfigured to work perfectly with the included compiler toolchain thus enabling you to be immediately productive with the FreeBASIC language. 
+The editor buffer is limited to 2 MiB. The native loader accepts source files
+up to 4 MiB before line-ending normalization and retains the file's UTF-8 BOM
+and detected line-ending style when saving. Compiler build and run commands
+execute synchronously, so Tiko pauses while they run. Set `TIKO_FBC` to the
+compiler executable path to select a compiler; otherwise Tiko runs `fbc` from
+`PATH`.
 
-Source code is written using the FreeBASIC language and uses the Scintilla editing library (in 64 bit DLL form).
+This is the first native port of Tiko's editing shell. Project and session
+management, localization, code completion, debugger integration, function
+parsing, and several commands shown in the original menus still need native
+implementations.
 
-Features:
+## Build
 
-- Unicode enabled.
-- 64 bit version.
-- High DPI aware for any monitor resolution.
-- Language localization. Simple create language file based on English.lang file.
-- Localized for 6 languages:
-- - English, French, Spanish, German, Norwegian, Chinese Simplified
-- Projects and non-project based editing.
-- Easy integration of Console or GUI based code.
-- Incremental compiling of code defined as a "module".
-- Easy including of Windows Resource files simply by specifying which source code file is the resource.
-- Seamless integration of the FreeBasic Compiler (both 32 bit and 64 bit).
-- Codetip popups and auto completion.
-- Basic Debugger integration with GDB.
+Install a recent FreeBASIC compiler with gfxlib support, then run the script
+for your platform from the repository root:
 
-Tiko is the replacement for the WinFBE Editor https://github.com/PaulSquires/WinFBE project which will soon be deprecated. 
+```sh
+chmod +x _compile.sh
+./_compile.sh
+./bin/tiko
+```
 
+On Windows, run `_compile.bat`. Both scripts build `src/tiko.bas` and include
+the bundled `src/omaGUI-main` toolkit.
 
-**Requirements:**
-- Windows 10 or later operating system because many newer API's are used in the source code.
+omaGUI owns platform-specific behavior such as clipboard access. Its Win32
+and xclip implementations remain gated by the target OS, with an in-process
+fallback where a system clipboard is unavailable.
 
+## License
 
+Tiko Editor is licensed under the GNU GPLv3 or later. See [LICENSE](LICENSE).
 
-![tiko editor dark mode](/screenshots/tiko_dark.png)
-
-![tiko editor light mode](/screenshots/tiko_light.png)
-
-
-tiko editor - Programmer's Code Editor for the FreeBASIC Compiler
-Copyright (C) 2016-2026 Paul Squires, PlanetSquires Software
-
-The tiko editor is licensed under the GNU GPLv3 or later.
-
+Copyright (C) 2016-2026 Paul Squires, PlanetSquires Software.

@@ -125,34 +125,35 @@ function frmOptionsColors_FillFontSizeCombo( _
             byval hCb as HWnd, _
             byval strFontName as wstring ptr _
             ) as long
+    dim as DWSTRING wszText
 
     select case ucase(*strFontName)
         case "FIXEDSYS"
             ComboBox_ResetContent(hCb)
-            ComboBox_AddString( hCb, @wstr("9"))
+            wszText = "9": ComboBox_AddString(hCb, wszText.sptr)
         case "TERMINAL"
             ComboBox_ResetContent(hCb)
-            ComboBox_AddString( hCb, @wstr("5" ))
-            ComboBox_AddString( hCb, @wstr("6" ))
-            ComboBox_AddString( hCb, @wstr("12"))
-            ComboBox_AddString( hCb, @wstr("14"))
+            wszText = "5": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "6": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "12": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "14": ComboBox_AddString(hCb, wszText.sptr)
         case Else                        
             ComboBox_ResetContent(hCb)
-            ComboBox_AddString( hCb, @wstr("8" ))
-            ComboBox_AddString( hCb, @wstr("9" ))
-            ComboBox_AddString( hCb, @wstr("10"))
-            ComboBox_AddString( hCb, @wstr("11"))
-            ComboBox_AddString( hCb, @wstr("12"))
-            ComboBox_AddString( hCb, @wstr("14"))
-            ComboBox_AddString( hCb, @wstr("16"))
-            ComboBox_AddString( hCb, @wstr("18"))
-            ComboBox_AddString( hCb, @wstr("20"))
-            ComboBox_AddString( hCb, @wstr("22"))
-            ComboBox_AddString( hCb, @wstr("24"))
-            ComboBox_AddString( hCb, @wstr("26"))
-            ComboBox_AddString( hCb, @wstr("28"))
-            ComboBox_AddString( hCb, @wstr("32"))
-            ComboBox_AddString( hCb, @wstr("36"))
+            wszText = "8": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "9": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "10": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "11": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "12": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "14": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "16": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "18": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "20": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "22": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "24": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "26": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "28": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "32": ComboBox_AddString(hCb, wszText.sptr)
+            wszText = "36": ComboBox_AddString(hCb, wszText.sptr)
     end select
 
     function = 0
@@ -163,25 +164,26 @@ end function
 ' Fill combobox with list of valid character sets
 ' ========================================================================================
 function frmOptionsColors_FillFontCharSets( byval hCtl as HWND ) as long
-    ComboBox_AddString( hCtl, @wstr("Default") )
-    ComboBox_AddString( hCtl, @wstr("Ansi") )
-    ComboBox_AddString( hCtl, @wstr("Arabic") )
-    ComboBox_AddString( hCtl, @wstr("Baltic") )
-    ComboBox_AddString( hCtl, @wstr("Chinese Big 5") )
-    ComboBox_AddString( hCtl, @wstr("East Europe") )
-    ComboBox_AddString( hCtl, @wstr("GB 2312") )
-    ComboBox_AddString( hCtl, @wstr("Greek") )
-    ComboBox_AddString( hCtl, @wstr("Hangul") )
-    ComboBox_AddString( hCtl, @wstr("Hebrew") )
-    ComboBox_AddString( hCtl, @wstr("Johab") )
-    ComboBox_AddString( hCtl, @wstr("Mac") )
-    ComboBox_AddString( hCtl, @wstr("OEM") )
-    ComboBox_AddString( hCtl, @wstr("Russian") )
-    ComboBox_AddString( hCtl, @wstr("Shiftjis") )
-    ComboBox_AddString( hCtl, @wstr("Symbol") )
-    ComboBox_AddString( hCtl, @wstr("Thai") )
-    ComboBox_AddString( hCtl, @wstr("Turkish") )
-    ComboBox_AddString( hCtl, @wstr("Vietnamese") )
+    dim as DWSTRING wszText
+    wszText = "Default": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Ansi": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Arabic": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Baltic": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Chinese Big 5": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "East Europe": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "GB 2312": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Greek": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Hangul": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Hebrew": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Johab": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Mac": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "OEM": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Russian": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Shiftjis": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Symbol": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Thai": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Turkish": ComboBox_AddString(hCtl, wszText.sptr)
+    wszText = "Vietnamese": ComboBox_AddString(hCtl, wszText.sptr)
     
     function = 0
 end function

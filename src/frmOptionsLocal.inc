@@ -257,7 +257,8 @@ function frmOptionsLocal_OnCommand( _
             
             ' Display the Save File Dialog
             dim wzFilename as wstring * MAX_PATH 
-            dim pwszName as wstring ptr = AfxIFileSaveDialog(hwnd, @wzFilename, @wstr("lang"), id)
+            dim as wstring * 16 wszDefaultExtension = "lang"
+            dim pwszName as wstring ptr = AfxIFileSaveDialog(hwnd, @wzFilename, @wszDefaultExtension, id)
             if pwszName then
                 wzFilename = *pwszName
                 frmOptionsLocal_ClearGlobalArray()
@@ -377,6 +378,7 @@ end function
 ' frmOptionsLocal_Show
 ' ========================================================================================
 function frmOptionsLocal_Show( byval hWndParent as HWND ) as LRESULT
+	Dim as DWSTRING wszColumnCaption
 
     '  Create the main window and child controls
     dim pWindow as CWindow ptr = new CWindow
@@ -437,8 +439,10 @@ function frmOptionsLocal_Show( byval hWndParent as HWND ) as LRESULT
     frmOptionsLocal_DisableEnglish()
 
     ' Display the columns in the Listview and load the English phrases
-    ListView_AddColumn( hwndLV, 0, @wstr("Index"), pWindow->ScaleX(50) )
-    ListView_AddColumn( hwndLV, 1, @wstr("English Phrase"), pWindow->ScaleX(280))
+    wszColumnCaption = "Index"
+    ListView_AddColumn(hwndLV, 0, wszColumnCaption.sptr, pWindow->ScaleX(50))
+    wszColumnCaption = "English Phrase"
+    ListView_AddColumn(hwndLV, 1, wszColumnCaption.sptr, pWindow->ScaleX(280))
 
     ' Always size the local phrase array to be the same size as the ENGLISH array.
     redim gLocalPhrases(ubound(gLangEnglish)) 

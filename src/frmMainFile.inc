@@ -295,7 +295,9 @@ function OnCommand_FileClose( _
             byval nTabNum as long = -1 _
             ) as LRESULT
 
-    dim wText as wstring * MAX_PATH  
+    dim wText as wstring * MAX_PATH
+    dim as wstring * (MAX_PATH + 64) wszQuestion
+    dim as wstring * 128 wszAppTitle = APPNAME
     dim pDoc as clsDocument ptr
     dim as long r
     
@@ -346,7 +348,8 @@ function OnCommand_FileClose( _
             (pDoc->UserModified = true) then
             
             gTTabCtl.SetFocusTab(i)
-            r = MessageBox( hwnd, L(76,"Save current changes?") & wstr(" ") & wText, @wstr(APPNAME), _
+            wszQuestion = L(76,"Save current changes?") & " " & wText
+            r = MessageBox(hwnd, @wszQuestion, @wszAppTitle, _
                             MB_YESNOCANCEL Or MB_ICONQUESTION)
             if r = IDCANCEL then exit function
             if r = IDYES then 

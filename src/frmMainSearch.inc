@@ -59,6 +59,8 @@ end function
 ' ========================================================================================
 function OnCommand_SearchGotoDefinition( byval pDoc as clsDocument ptr ) as LRESULT
 
+    dim as wstring * 128 wszAppTitle = APPNAME
+
     If pDoc = 0 Then Exit Function
     
     dim pData as DB2_DATA ptr
@@ -109,7 +111,7 @@ function OnCommand_SearchGotoDefinition( byval pDoc as clsDocument ptr ) as LRES
         end if
         
         if pData = 0 then
-            MessageBox( HWND_FRMMAIN, L(224,"Sub/Function definition not found."), @wstr(APPNAME), MB_ICONWARNING)
+            MessageBox(HWND_FRMMAIN, L(224,"Sub/Function definition not found."), @wszAppTitle, MB_ICONWARNING)
             exit function
         end if
         wszFilename = pData->filename
