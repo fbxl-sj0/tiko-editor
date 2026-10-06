@@ -2165,7 +2165,7 @@ Private Function textbox_MatchingSuffixLength( _
     While low < high
         Dim As Integer middle = low + (high - low + 1) \ 2
         If oma_BytesEqual(oldBytes + oldLength - suffixLength - middle, _
-            newBytes + newLength - suffixLength - middle, middle) = 0 Then
+            newBytes + newLength - suffixLength - middle, middle) <> 0 Then
             low = middle
         Else
             high = middle - 1
@@ -5266,9 +5266,8 @@ Sub textbox_Render(ByVal w As Widget Ptr)
             Exit While
 
         ' A checkpoint provider restores syntax before each repaint. Once the
-        ' caret is located, later clipped rows contribute neither pixels nor
-        ' caret geometry, so their lexer callbacks need no replay. Providers
-        ' that decline restoration retain the complete viewport walk.
+        ' caret is located, rows below the paint clip need no further callbacks.
+        ' Providers that decline restoration retain the complete viewport walk.
         If preparedState <> 0 AndAlso cursorRecorded <> 0 AndAlso _
            w->ay + textbox_TextPadding(textData) + _
                (lineIndex - textData->v_scroll) * textbox_LineHeight(textData) >= _

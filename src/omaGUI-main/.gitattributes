@@ -4,8 +4,8 @@
 # Responsibilities: Keep checkout hashes independent of parent EOL rules.
 # This file contains no application-level Git policy.
 
-# The manifests cover the stored bytes, including existing mixed line endings.
-# Disabling text conversion here overrides the host repository's CRLF rules.
-* -text
+# The manifests cover exact source and asset bytes, including mixed line endings.
+# Unset inherited end-of-line rules so parent repositories cannot rewrite them.
+* -text !eol
 
 # end of .gitattributes
