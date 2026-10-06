@@ -11,6 +11,8 @@
     Responsibilities:
 
         - confirm dialogs enumerate the requested directory
+        - verify portable case-insensitive wildcard-list filtering
+        - verify bounded caller-supplied dialog titles
         - exercise cancel, open, and save results through button input
         - verify removing a completed dialog clears modal state
 
@@ -23,6 +25,7 @@
 
 #lang "fb"
 
+#define OMAGUI_PORTABLE_ONLY
 #define OMAGUI_IMPLEMENTATION
 #include once "omaGUI.bi"
 
@@ -51,10 +54,16 @@ Dim As Widget Ptr dialogWidget
 Dim As FileDialogData Ptr dialogData
 Dim As ListBoxData Ptr listData
 Dim As Integer selectedFileIndex
+Dim As Integer filteredFileCount
 Dim As String selectedFilename
+Dim As String sampleDirectory
+Dim As String tooManyPatterns
 
 backend_Init FILE_DIALOG_TEST_WIDTH, FILE_DIALOG_TEST_HEIGHT, 1
 gui_Init()
+' Headless rendering does not replace input polling. Isolate keyboard/text
+' as well as pointer input before the first modal update.
+input_ResetForTest()
 
 dialogWidget = filedialog_CreateAtPath( _
     "file_dialog_cancel", FILE_DIALOG_TEST_X, FILE_DIALOG_TEST_Y, CurDir _
@@ -85,6 +94,63 @@ If gui_IsModalOpen() <> 0 Then
     fileDialogTest_Fail "removing the cancel dialog left modal state active", 4
 End If
 
+sampleDirectory = CurDir & "/tests/assets"
+dialogWidget = filedialog_CreateAtPath( _
+    "file_dialog_filter", FILE_DIALOG_TEST_X, FILE_DIALOG_TEST_Y, _
+    sampleDirectory _
+)
+' Seventeen entries verify the public sixteen-pattern list limit.
+tooManyPatterns = "*;*;*;*;*;*;*;*;*;*;*;*;*;*;*;*;*"
+If dialogWidget = 0 OrElse _
+   filedialog_SetFilter(dialogWidget, "*.html;*.txt") = 0 OrElse _
+   filedialog_GetFilter(dialogWidget) <> "*.html;*.txt" OrElse _
+   filedialog_SetFilter(dialogWidget, "../*") <> 0 OrElse _
+   filedialog_SetFilter(dialogWidget, "*.html;;*.txt") <> 0 OrElse _
+   filedialog_SetFilter(dialogWidget, "*.html;") <> 0 OrElse _
+   filedialog_SetFilter(dialogWidget, tooManyPatterns) <> 0 OrElse _
+   filedialog_GetFilter(dialogWidget) <> "*.html;*.txt" Then
+    fileDialogTest_Fail "portable filter API rejected valid state", 5
+End If
+If filedialog_SetTitle(dialogWidget, "Open an omaGUI document") = 0 OrElse _
+   Cast(SubWindowData Ptr, Cast(FileDialogData Ptr, _
+       dialogWidget->data)->win->data)->title <> "Open an omaGUI document" OrElse _
+   filedialog_SetTitle(dialogWidget, String(256, "X")) <> 0 OrElse _
+   filedialog_SetTitle(dialogWidget, "bad" & Chr(0) & "title") <> 0 Then
+    fileDialogTest_Fail "bounded title API rejected valid state", 10
+End If
+gui_AddWidget dialogWidget
+dialogData = Cast(FileDialogData Ptr, dialogWidget->data)
+listData = Cast(ListBoxData Ptr, dialogData->lst->data)
+For itemIndex As Integer = 0 To listData->item_count - 1
+    If listData->items(itemIndex) <> ".." AndAlso _
+       Left(listData->items(itemIndex), 1) <> "[" Then
+        filteredFileCount += 1
+        If LCase(Right(listData->items(itemIndex), 5)) <> ".html" AndAlso _
+           LCase(Right(listData->items(itemIndex), 4)) <> ".txt" Then
+            fileDialogTest_Fail "filter exposed a file outside its wildcard list", 6
+        End If
+    End If
+Next itemIndex
+If filteredFileCount <> 2 Then
+    fileDialogTest_Fail "filter did not expose both bundled wildcard fixtures", 7
+End If
+If filedialog_SetFilter(dialogWidget, "*.HTML;*.TXT") = 0 OrElse _
+   filedialog_GetFilter(dialogWidget) <> "*.HTML;*.TXT" Then
+    fileDialogTest_Fail "case-insensitive filters rejected uppercase patterns", 12
+End If
+listData = Cast(ListBoxData Ptr, dialogData->lst->data)
+filteredFileCount = 0
+For itemIndex As Integer = 0 To listData->item_count - 1
+    If listData->items(itemIndex) <> ".." AndAlso _
+       Left(listData->items(itemIndex), 1) <> "[" Then
+        filteredFileCount += 1
+    End If
+Next itemIndex
+If filteredFileCount <> 2 Then
+    fileDialogTest_Fail "uppercase patterns did not match lowercase filenames", 13
+End If
+gui_RemoveWidget "file_dialog_filter"
+
 dialogWidget = filedialog_CreateSaveAtPath( _
     "file_dialog_save", FILE_DIALOG_TEST_X, FILE_DIALOG_TEST_Y, _
     CurDir, "saved_test.bas" _
@@ -96,7 +162,11 @@ fileDialogTest_Click FILE_DIALOG_TEST_OPEN_X, FILE_DIALOG_TEST_BUTTON_Y
 If filedialog_GetResultState(dialogWidget) <> 1 OrElse _
    Right(filedialog_GetSelectedFile(dialogWidget), Len("saved_test.bas")) <> _
    "saved_test.bas" Then
-    fileDialogTest_Fail "save did not return the requested filename", 5
+    Dim As FileDialogData Ptr save_data = dialogWidget->data
+    fileDialogTest_Fail "save did not return the requested filename; state=" & _
+        Str(filedialog_GetResultState(dialogWidget)) & "; result=" & filedialog_GetSelectedFile(dialogWidget) & _
+        "; name=" & Cast(TextBoxData Ptr, save_data->filenameBox->data)->text & _
+        "; selected=" & Str(listbox_GetSelectedIndex(save_data->lst)), 8
 End If
 
 gui_RemoveWidget "file_dialog_save"
@@ -121,7 +191,7 @@ For itemIndex As Integer = 0 To listData->item_count - 1
 Next itemIndex
 
 If selectedFileIndex < 0 Then
-    fileDialogTest_Fail "the requested directory exposed no selectable file", 6
+    fileDialogTest_Fail "the requested directory exposed no selectable file", 9
 End If
 
 listData->selected_index = selectedFileIndex
@@ -130,7 +200,7 @@ fileDialogTest_Click FILE_DIALOG_TEST_OPEN_X, FILE_DIALOG_TEST_BUTTON_Y
 If filedialog_GetResultState(dialogWidget) <> 1 OrElse _
    Right(LCase(filedialog_GetSelectedFile(dialogWidget)), _
        Len(selectedFilename)) <> LCase(selectedFilename) Then
-    fileDialogTest_Fail "open did not return the selected file", 7
+    fileDialogTest_Fail "open did not return the selected file", 11
 End If
 
 gui_RemoveWidget "file_dialog_open"

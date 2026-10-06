@@ -12,6 +12,7 @@
 
         - prove per-pixel alpha blends source and destination color channels
         - prove imported graphic object alpha reaches its filled geometry
+        - prove normal and scaled embedded text reaches the alpha renderer
         - prove fully transparent pixels preserve the destination
 
     This file intentionally does NOT contain:
@@ -42,12 +43,40 @@ Private Function alphaRender_Channel( _
 End Function
 
 
+Private Function alphaRender_ChangedPixels( _
+    ByVal x1 As Integer, ByVal y1 As Integer, _
+    ByVal x2 As Integer, ByVal y2 As Integer, _
+    ByRef maximumRed As Integer _
+) As Integer
+    Dim As Integer changedPixels
+    Dim As Integer redValue
+    Dim As ULong sampleValue
+
+    maximumRed = 0
+
+    For sampleY As Integer = y1 To y2
+        For sampleX As Integer = x1 To x2
+            sampleValue = Point(sampleX, sampleY)
+            redValue = alphaRender_Channel(sampleValue, 16)
+
+            If sampleValue <> RGB(0, 0, 0) Then changedPixels += 1
+            If redValue > maximumRed Then maximumRed = redValue
+        Next sampleX
+    Next sampleY
+
+    Return changedPixels
+End Function
+
+
 Dim As ULong pixelValue
 Dim As GraphicShapeRenderOptions shapeOptions
 Dim As Integer unusedPointX(1 To GRAPHICSHAPE_MAX_POINTS)
 Dim As Integer unusedPointY(1 To GRAPHICSHAPE_MAX_POINTS)
+Dim As Integer changedPixels
+Dim As Integer maximumRed
 
-backend_Init 96, 72, -1, 0, BACKEND_COLOR_DEPTH_TRUE_COLOR
+backend_Init 96, 72, 0, BACKEND_WINDOW_FIXED, _
+    BACKEND_COLOR_DEPTH_TRUE_COLOR
 backend_Clear RGB(0, 0, 0)
 
 backend_PSetAlpha 10, 10, RGB(255, 128, 0), 128
@@ -83,6 +112,23 @@ If alphaRender_Channel(pixelValue, 16) <> 0 OrElse _
    alphaRender_Channel(pixelValue, 8) <> 64 OrElse _
    alphaRender_Channel(pixelValue, 0) <> 128 Then
     alphaRender_Fail "graphic object alpha did not blend its fill", 3
+End If
+
+backend_PrintFontAlpha _
+    40, 4, RGB(255, 255, 255), "HART", _
+    BACKEND_FONT_LIBERATION_SANS_18_BOLD, 128
+changedPixels = alphaRender_ChangedPixels(40, 4, 95, 30, maximumRed)
+
+If changedPixels = 0 OrElse maximumRed < 127 OrElse maximumRed > 129 Then
+    alphaRender_Fail "alpha font rendering did not reach the framebuffer", 4
+End If
+
+backend_PrintScaledFontAlpha _
+    40, 36, RGB(255, 255, 255), "A", BACKEND_FONT_DEFAULT, 2, 2, 192
+changedPixels = alphaRender_ChangedPixels(40, 36, 70, 71, maximumRed)
+
+If changedPixels = 0 OrElse maximumRed < 191 OrElse maximumRed > 193 Then
+    alphaRender_Fail "scaled alpha font rendering was wrong", 5
 End If
 
 backend_Exit

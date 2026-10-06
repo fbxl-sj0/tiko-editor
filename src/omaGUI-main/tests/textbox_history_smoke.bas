@@ -85,7 +85,7 @@ End Sub
 ' -------------------------------------------------------------------------
 
 backend_Init _
-    TEXTBOX_HISTORY_SMOKE_SCREEN_W, TEXTBOX_HISTORY_SMOKE_SCREEN_H, 1
+    TEXTBOX_HISTORY_SMOKE_SCREEN_W, TEXTBOX_HISTORY_SMOKE_SCREEN_H, 0
 textboxHistorySmoke_BackendActive = 1
 
 Dim screenWidth As Integer

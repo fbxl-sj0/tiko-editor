@@ -6,7 +6,7 @@
 
     Purpose:
 
-        Declare the bounded plain-text clipboard used by editable widgets.
+        Declare the bounded cross-platform clipboard used by editable widgets.
 
     Responsibilities:
 
@@ -15,7 +15,7 @@
 
     This file intentionally does NOT contain:
 
-        - platform API calls
+        - platform backend implementation
         - textbox selection rules
         - rich-text or image clipboard formats
 '/

@@ -6,12 +6,14 @@
 
     Purpose:
 
-        Generate omaGUI bitmap font data from a TrueType font.
+        Generate omaGUI bitmap font data from a mapped font file.
 
     Responsibilities:
 
-        - load one TrueType font through SDL_ttf
+        - load TrueType, OpenType, or BDF font data through SDL_ttf
         - rasterize printable ASCII glyphs into 8-bit alpha data
+        - optionally rasterize a sorted list of Unicode code points
+        - write complete mapped Unicode fonts in the OGF1 binary format
         - write a FreeBASIC include file containing the glyph bitmaps
         - optionally write a BMP atlas for visual inspection
 
@@ -31,8 +33,47 @@ Const FIRST_GLYPH As Integer = 32
 Const LAST_GLYPH As Integer = 126
 Const DEFAULT_POINT_SIZE As Integer = 12
 Const ATLAS_COLUMNS As Integer = 16
+Const FONTGEN_MAX_EXTRA_GLYPHS As Integer = 4096
+Const FONT_PACK_HEADER_BYTES As Integer = 20
+Const FONT_PACK_GLYPH_HEADER_BYTES As Integer = 14
+Const FONT_PACK_MAX_CODEPOINT As UInteger = &H10FFFF
+' Keep generated packs within the runtime loader's allocation limits.
+Const FONT_PACK_MAX_BYTES As ULongInt = 67108864
+' Includes every scalar after excluding UTF-8 controls and surrogates.
+Const FONT_PACK_MAX_GLYPHS As Integer = 1111999
+' Windows desktop fonts are authored against the standard 96 DPI desktop grid.
+Const FONT_PACK_TARGET_DPI As UInteger = 96
 ' SDL2 assigns value one to ordinary source-alpha blending.
 Const FONTGEN_BLENDMODE_BLEND As Integer = &h00000001
+
+/'
+    The system FreeBASIC SDL_ttf binding targets 2.0.15. Full Unicode glyph
+    enumeration and the 96-DPI font opener were added later, so declare those
+    entry points here for the build-time generator. SDL stays out of the omaGUI
+    runtime.
+'/
+Extern "C"
+    Declare Function TTF_GlyphIsProvided32 Alias "TTF_GlyphIsProvided32" ( _
+        ByVal font As TTF_Font Ptr, ByVal codepoint As UInteger _
+    ) As Long
+    Declare Function TTF_OpenFontIndexDPI _
+        Alias "TTF_OpenFontIndexDPI" ( _
+        ByVal fontPath As Const ZString Ptr, ByVal pointSize As Long, _
+        ByVal faceIndex As CLong, ByVal horizontalDpi As UInteger, _
+        ByVal verticalDpi As UInteger _
+    ) As TTF_Font Ptr
+    Declare Function TTF_GlyphMetrics32 Alias "TTF_GlyphMetrics32" ( _
+        ByVal font As TTF_Font Ptr, ByVal codepoint As UInteger, _
+        ByVal minX As Long Ptr, ByVal maxX As Long Ptr, _
+        ByVal minY As Long Ptr, ByVal maxY As Long Ptr, _
+        ByVal advance As Long Ptr _
+    ) As Long
+    Declare Function TTF_RenderGlyph32_Blended _
+        Alias "TTF_RenderGlyph32_Blended" ( _
+        ByVal font As TTF_Font Ptr, ByVal codepoint As UInteger, _
+        ByVal foreground As SDL_Color _
+    ) As SDL_Surface Ptr
+End Extern
 
 ' -------------------------------------------------------------------------
 ' Output helpers
@@ -40,11 +81,98 @@ Const FONTGEN_BLENDMODE_BLEND As Integer = &h00000001
 
 Sub PrintUsage()
     Print "Usage:"
-    Print "  font_gen.exe [font-path] [point-size] [symbol-prefix] [data-output.bi] [atlas-output.bmp]"
+    Print "  font_gen.exe [font-path] [point-size] [symbol-prefix] [data-output.bi] [atlas-output.bmp] [unicode-codepoints.txt] [font-face-index] [font-license]"
+    Print "  font_gen.exe --pack [font-path] [point-size] [data-output.ogf] [font-face-index]"
     Print ""
     Print "Example:"
     Print "  font_gen.exe C:\Windows\Fonts\arial.ttf 10 font_arial_10_regular assets\fonts\font_arial_10_regular.bi assets\fonts\font_arial_10_regular.bmp"
+    Print "  font_gen.exe --pack assets\fonts\CascadiaMono-Regular.ttf 11 assets\fonts\cascadia_mono.ogf"
+    Print "  font_gen.exe --pack NotoSansCJK-Regular.ttc 9 assets\fonts\noto_sans_cjk_sc.ogf 2"
+    Print "  font_gen.exe --pack assets\fonts\spleen-8x16.bdf 12 assets\fonts\terminal_spleen_8x16.ogf"
 End Sub
+
+Function ReadExtraGlyphList( _
+    ByRef list_path As String, _
+    ByRef normalized_list As String, _
+    ByRef glyph_count As Integer _
+) As Integer
+
+    Dim As Integer file_number
+    Dim As UInteger previous_codepoint = LAST_GLYPH
+    Dim As UInteger codepoint
+    Dim As String line_text
+
+    normalized_list = ""
+    glyph_count = 0
+    If Len(list_path) = 0 Then Return -1
+
+    file_number = FreeFile
+    If Open(list_path For Input As #file_number) <> 0 Then
+        Print "ERROR: Could not open Unicode code point list " & list_path
+        Return 0
+    End If
+
+    While Not Eof(file_number)
+        Line Input #file_number, line_text
+        line_text = Trim(line_text)
+        If line_text = "" OrElse Left(line_text, 1) = "#" OrElse _
+           Left(line_text, 1) = "'" Then Continue While
+
+        codepoint = CUInt(ValInt(line_text))
+        If codepoint <= LAST_GLYPH OrElse _
+           codepoint > FONT_PACK_MAX_CODEPOINT OrElse _
+           (codepoint >= &H7F AndAlso codepoint <= &H9F) OrElse _
+           (codepoint >= &HD800 AndAlso codepoint <= &HDFFF) Then
+            Close #file_number
+            Print "ERROR: Invalid Unicode scalar code point: " & line_text
+            Return 0
+        End If
+        If glyph_count >= FONTGEN_MAX_EXTRA_GLYPHS Then
+            Close #file_number
+            Print "ERROR: Unicode code point list exceeds its limit."
+            Return 0
+        End If
+        If codepoint <= previous_codepoint Then
+            Close #file_number
+            Print "ERROR: Unicode code points must be unique and sorted."
+            Return 0
+        End If
+
+        If glyph_count > 0 Then normalized_list &= Chr(10)
+        normalized_list &= Str(codepoint)
+        previous_codepoint = codepoint
+        glyph_count += 1
+    Wend
+
+    Close #file_number
+    Return -1
+
+End Function
+
+
+Function NextExtraGlyph( _
+    ByRef normalized_list As String, _
+    ByRef list_position As Integer, _
+    ByRef codepoint As UInteger _
+) As Integer
+
+    Dim As Integer line_end
+
+    If list_position > Len(normalized_list) Then Return 0
+    line_end = InStr(list_position, normalized_list, Chr(10))
+    If line_end = 0 Then
+        codepoint = ValInt(Mid(normalized_list, list_position))
+        list_position = Len(normalized_list) + 1
+    Else
+        codepoint = ValInt(Mid( _
+            normalized_list, list_position, line_end - list_position _
+        ))
+        list_position = line_end + 1
+    End If
+
+    Return -1
+
+End Function
 
 Function DefaultFontPath() As String
 #ifdef __FB_WIN32__
@@ -76,6 +204,29 @@ Sub EmitLine(ByVal file_number As Integer, _
     End If
 End Sub
 
+
+Private Function FontDataOutputFilename( _
+    ByRef symbol_prefix As String, ByRef data_output_path As String _
+) As String
+
+    Dim As Integer lastSeparator
+    Dim As String outputFileName = data_output_path
+
+    For characterIndex As Integer = 1 To Len(data_output_path)
+        If Mid(data_output_path, characterIndex, 1) = "/" OrElse _
+           Mid(data_output_path, characterIndex, 1) = Chr(92) Then _
+            lastSeparator = characterIndex
+    Next characterIndex
+    If lastSeparator > 0 Then _
+        outputFileName = Mid(data_output_path, lastSeparator + 1)
+    If outputFileName = "" OrElse outputFileName = "-" Then _
+        outputFileName = symbol_prefix & ".bi"
+
+    Return outputFileName
+
+End Function
+
+
 ' -------------------------------------------------------------------------
 ' Font data generation
 ' -------------------------------------------------------------------------
@@ -84,12 +235,18 @@ Sub EmitFileHeader(ByVal file_number As Integer, _
                    ByVal use_file As Integer, _
                    ByRef symbol_prefix As String, _
                    ByRef font_path As String, _
-                   ByVal point_size As Integer)
+                   ByRef data_output_path As String, _
+                   ByVal point_size As Integer, _
+                   ByVal font_face_index As Integer, _
+                   ByRef source_license As String)
+    Dim As String outputFileName = _
+        FontDataOutputFilename(symbol_prefix, data_output_path)
+
     EmitLine file_number, use_file, "/'"
     EmitLine file_number, use_file, "    Project: omaGUI Generated Bitmap Font"
     EmitLine file_number, use_file, "    ------------------------------------"
     EmitLine file_number, use_file, ""
-    EmitLine file_number, use_file, "    File: " & symbol_prefix & ".bi"
+    EmitLine file_number, use_file, "    File: " & outputFileName
     EmitLine file_number, use_file, ""
     EmitLine file_number, use_file, "    Purpose:"
     EmitLine file_number, use_file, ""
@@ -99,6 +256,14 @@ Sub EmitFileHeader(ByVal file_number As Integer, _
     EmitLine file_number, use_file, ""
     EmitLine file_number, use_file, "        " & font_path
     EmitLine file_number, use_file, "        point size " & Str(point_size)
+    EmitLine file_number, use_file, "        collection face " & _
+        Str(font_face_index)
+    If source_license <> "" Then
+        EmitLine file_number, use_file, ""
+        EmitLine file_number, use_file, "    Font license:"
+        EmitLine file_number, use_file, ""
+        EmitLine file_number, use_file, "        " & source_license
+    End If
     EmitLine file_number, use_file, ""
     EmitLine file_number, use_file, "    This file intentionally does NOT contain:"
     EmitLine file_number, use_file, ""
@@ -132,8 +297,8 @@ Sub EmitGlyphData(ByVal file_number As Integer, _
     If surface->w <= 0 OrElse surface->h <= 0 Then Exit Sub
     If surface->pitch < surface->w * SizeOf(ULong) Then Exit Sub
 
-    EmitLine file_number, use_file, "' Font data for character " & _
-             Str(character_code) & " ('" & Chr(character_code) & "')"
+    EmitLine file_number, use_file, "' Font data for Unicode code point " & _
+             Trim(Str(character_code))
     EmitLine file_number, use_file, "Static Shared As UByte " & symbol_prefix & _
              "_char_" & Trim(Str(character_code)) & "_data(...) = { _"
     EmitLine file_number, use_file, "  " & Str(surface->w) & ", " & _
@@ -179,6 +344,47 @@ Sub EmitGlyphData(ByVal file_number As Integer, _
     EmitLine file_number, use_file, ""
 End Sub
 
+
+Sub EmitUnicodeGlyphTable( _
+    ByVal file_number As Integer, _
+    ByVal use_file As Integer, _
+    ByRef symbol_prefix As String, _
+    ByRef normalized_list As String, _
+    ByVal glyph_count As Integer _
+)
+
+    Dim As Integer list_position = 1
+    Dim As UInteger codepoint
+
+    If glyph_count <= 0 Then Exit Sub
+
+    EmitLine file_number, use_file, "' Sorted Unicode glyph pointers for backend_SetUnicodeGlyphs."
+    EmitLine file_number, use_file, "Const " & symbol_prefix & _
+        "_unicode_glyph_count As Integer = " & Trim(Str(glyph_count))
+    EmitLine file_number, use_file, "Dim Shared As UInteger " & symbol_prefix & _
+        "_unicode_codepoints(0 To " & Trim(Str(glyph_count - 1)) & ")"
+    EmitLine file_number, use_file, "Dim Shared As UByte Ptr " & symbol_prefix & _
+        "_unicode_glyphs(0 To " & Trim(Str(glyph_count - 1)) & ")"
+    EmitLine file_number, use_file, ""
+    EmitLine file_number, use_file, "Sub " & symbol_prefix & _
+        "_init_unicode_pointers()"
+
+    For glyph_index As Integer = 0 To glyph_count - 1
+        If NextExtraGlyph(normalized_list, list_position, codepoint) = 0 Then _
+            Exit For
+        EmitLine file_number, use_file, "    " & symbol_prefix & _
+            "_unicode_codepoints(" & Trim(Str(glyph_index)) & ") = &H" & _
+            Hex(codepoint)
+        EmitLine file_number, use_file, "    " & symbol_prefix & _
+            "_unicode_glyphs(" & Trim(Str(glyph_index)) & ") = @" & _
+            symbol_prefix & "_char_" & Trim(Str(codepoint)) & "_data(0)"
+    Next glyph_index
+
+    EmitLine file_number, use_file, "End Sub"
+    EmitLine file_number, use_file, ""
+
+End Sub
+
 Sub EmitInitBlock(ByVal file_number As Integer, _
                   ByVal use_file As Integer, _
                   ByRef symbol_prefix As String)
@@ -197,9 +403,18 @@ Sub EmitInitBlock(ByVal file_number As Integer, _
 
     EmitLine file_number, use_file, "End Sub"
     EmitLine file_number, use_file, ""
+End Sub
+
+Sub EmitFileFooter( _
+    ByVal file_number As Integer, ByVal use_file As Integer, _
+    ByRef symbol_prefix As String, ByRef data_output_path As String _
+)
+
     EmitLine file_number, use_file, "#endif"
     EmitLine file_number, use_file, ""
-    EmitLine file_number, use_file, "/' end of " & symbol_prefix & ".bi '/"
+    EmitLine file_number, use_file, "/' end of " & _
+        FontDataOutputFilename(symbol_prefix, data_output_path) & " '/"
+
 End Sub
 
 Function SaveAtlas(ByVal font As TTF_Font Ptr, _
@@ -272,11 +487,313 @@ Function SaveAtlas(ByVal font As TTF_Font Ptr, _
     Return -1
 End Function
 
+Private Function FontPackU16(ByVal value As UInteger) As String
+    Return Chr(value And &HFF) & Chr((value Shr 8) And &HFF)
+End Function
+
+Private Function FontPackU32(ByVal value As UInteger) As String
+    Return Chr(value And &HFF) & _
+           Chr((value Shr 8) And &HFF) & _
+           Chr((value Shr 16) And &HFF) & _
+           Chr((value Shr 24) And &HFF)
+End Function
+
+Private Function FontPackSigned16(ByVal value As Long) As String
+    Return FontPackU16(CUInt(value) And &HFFFF)
+End Function
+
+Private Function FontPackCodepointIsControl( _
+    ByVal codepoint As UInteger _
+) As Integer
+
+    If codepoint < 32 OrElse _
+       (codepoint >= &H7F AndAlso codepoint <= &H9F) Then Return -1
+    If codepoint >= &HD800 AndAlso codepoint <= &HDFFF Then Return -1
+    Return 0
+
+End Function
+
+Function GenerateFontPack( _
+    ByRef font_path As String, ByVal point_size As Integer, _
+    ByRef output_path As String, ByVal font_face_index As Integer _
+) As Integer
+
+    Dim As Integer file_number
+    Dim As Integer glyph_count
+    Dim As Integer font_height
+    Dim As Integer font_ascent
+    Dim As Integer pixel_count
+    Dim As Integer pixel_index
+    Dim As Integer invalid_pack
+    Dim As Integer bitmap_width
+    Dim As Integer bitmap_height
+    Dim As Integer alpha_min_x
+    Dim As Integer alpha_min_y
+    Dim As Integer alpha_max_x
+    Dim As Integer alpha_max_y
+    Dim As Long min_x
+    Dim As Long max_x
+    Dim As Long min_y
+    Dim As Long max_y
+    Dim As Long advance
+    Dim As Long bearing_x
+    Dim As Long bearing_y
+    Dim As UInteger codepoint
+    Dim As ULong pixel_value
+    Dim As ULongInt pack_size
+    Dim As ULongInt glyph_record_size
+    Dim As UByte alpha
+    Dim As UByte Ptr pixels
+    Dim As SDL_Surface Ptr surface
+    Dim As SDL_Color white
+    Dim As Const SDL_version Ptr linked_version
+    Dim As TTF_Font Ptr font
+    Dim As String temporary_path = output_path & ".tmp"
+    Dim As String file_header
+    Dim As String glyph_header
+    Dim As String glyph_pixels
+
+    If point_size < 1 OrElse point_size > 255 Then
+        Print "ERROR: Font point size must be from 1 through 255."
+        Return 0
+    End If
+    If font_face_index < 0 OrElse font_face_index > 65535 Then
+        Print "ERROR: Font face index must be from 0 through 65535."
+        Return 0
+    End If
+    If Len(output_path) = 0 OrElse output_path = ".tmp" Then
+        Print "ERROR: Font pack output path is empty."
+        Return 0
+    End If
+
+    If TTF_Init() = -1 Then
+        Print "ERROR: Could not initialize SDL_ttf."
+        Return 0
+    End If
+
+    linked_version = TTF_Linked_Version()
+    If linked_version = 0 OrElse linked_version->major < 2 OrElse _
+       (linked_version->major = 2 AndAlso linked_version->minor < 0) OrElse _
+       (linked_version->major = 2 AndAlso linked_version->minor = 0 AndAlso _
+        linked_version->patch < 18) Then
+        Print "ERROR: Full Unicode font packs require SDL_ttf 2.0.18 or newer."
+        TTF_Quit()
+        Return 0
+    End If
+
+    font = TTF_OpenFontIndexDPI( _
+        font_path, point_size, font_face_index, _
+        FONT_PACK_TARGET_DPI, FONT_PACK_TARGET_DPI _
+    )
+    If font = 0 Then
+        Print "ERROR: Could not load font " & font_path
+        TTF_Quit()
+        Return 0
+    End If
+
+    font_height = TTF_FontHeight(font)
+    font_ascent = TTF_FontAscent(font)
+    If font_height < 1 OrElse font_height > 65535 OrElse _
+       font_ascent < 0 OrElse font_ascent > 65535 Then
+        Print "ERROR: Font metrics are outside the font-pack format limits."
+        TTF_CloseFont(font)
+        TTF_Quit()
+        Return 0
+    End If
+
+    If Len(Dir(temporary_path)) > 0 Then Kill temporary_path
+    file_number = FreeFile
+    If Open(temporary_path For Binary As #file_number) <> 0 Then
+        Print "ERROR: Could not open font pack output " & temporary_path
+        TTF_CloseFont(font)
+        TTF_Quit()
+        Return 0
+    End If
+    pack_size = FONT_PACK_HEADER_BYTES
+
+    /'
+        OGF1 stores one complete font cmap in sorted code-point order.
+        Header: magic, version, header size, glyph count, line height,
+        ascent, point size, and collection face index, all little-endian.
+        Glyphs store code point, cropped bitmap dimensions, advance, bearings,
+        then one alpha byte per bitmap pixel. SDL_ttf renders each glyph into
+        a line-aligned surface, so cropping the ink is required before the
+        bearings can be applied by omaGUI's bitmap renderer.
+    '/
+    file_header = "OGF1" & FontPackU16(1) & _
+        FontPackU16(FONT_PACK_HEADER_BYTES) & FontPackU32(0) & _
+        FontPackU16(font_height) & FontPackU16(font_ascent) & _
+        FontPackU16(point_size) & FontPackU16(font_face_index)
+    Put #file_number, , file_header
+
+    white.r = 255
+    white.g = 255
+    white.b = 255
+    white.a = 255
+
+    For codepoint As UInteger = 32 To FONT_PACK_MAX_CODEPOINT
+        If FontPackCodepointIsControl(codepoint) <> 0 Then Continue For
+        If TTF_GlyphIsProvided32(font, codepoint) = 0 Then Continue For
+        If glyph_count >= FONT_PACK_MAX_GLYPHS Then
+            Print "ERROR: Font has more glyphs than the OGF1 format allows."
+            invalid_pack = -1
+            Exit For
+        End If
+        If TTF_GlyphMetrics32( _
+            font, codepoint, @min_x, @max_x, @min_y, @max_y, @advance _
+        ) <> 0 Then
+            Print "WARNING: Could not read metrics for Unicode code point " & _
+                Str(codepoint)
+            Continue For
+        End If
+
+        surface = TTF_RenderGlyph32_Blended(font, codepoint, white)
+        If surface = 0 Then
+            Print "WARNING: Could not render Unicode code point " & _
+                Str(codepoint)
+            Continue For
+        End If
+
+        If surface->pixels = 0 OrElse surface->format = 0 OrElse _
+           surface->format->BytesPerPixel <> 4 OrElse _
+           surface->format->Amask = 0 OrElse surface->w < 0 OrElse _
+           surface->h < 0 OrElse surface->w > 255 OrElse _
+           surface->h > 255 OrElse surface->pitch < surface->w * 4 OrElse _
+           advance < 0 OrElse advance > 65535 OrElse _
+           min_x < -32768 OrElse min_x > 32767 OrElse _
+           (font_ascent - max_y) < -32768 OrElse _
+           (font_ascent - max_y) > 32767 Then
+            Print "WARNING: Skipping out-of-range glyph " & Str(codepoint)
+            SDL_FreeSurface(surface)
+            Continue For
+        End If
+
+        /'
+            SDL_ttf returns a line-aligned glyph surface. Its origin shifts
+            right or down when a glyph overhangs above or left of the line.
+            Cropped pixel bounds include the metric bearing and that shift, so
+            remove only the surface-origin shift when storing pen-relative
+            bearings.
+        '/
+        alpha_min_x = surface->w
+        alpha_min_y = surface->h
+        alpha_max_x = -1
+        alpha_max_y = -1
+        pixels = surface->pixels
+        For pixel_y As Integer = 0 To surface->h - 1
+            For pixel_x As Integer = 0 To surface->w - 1
+                pixel_value = *Cast( _
+                    ULong Ptr, pixels + (pixel_y * surface->pitch) + _
+                    (pixel_x * SizeOf(ULong)) _
+                )
+                alpha = (pixel_value Shr surface->format->Ashift) And &HFF
+                If alpha = 0 Then Continue For
+                If pixel_x < alpha_min_x Then alpha_min_x = pixel_x
+                If pixel_y < alpha_min_y Then alpha_min_y = pixel_y
+                If pixel_x > alpha_max_x Then alpha_max_x = pixel_x
+                If pixel_y > alpha_max_y Then alpha_max_y = pixel_y
+            Next pixel_x
+        Next pixel_y
+
+        If alpha_max_x < alpha_min_x OrElse alpha_max_y < alpha_min_y Then
+            ' Whitespace has an advance but no bitmap pixels.
+            bitmap_width = 0
+            bitmap_height = 0
+            alpha_min_x = 0
+            alpha_min_y = 0
+        Else
+            bitmap_width = alpha_max_x - alpha_min_x + 1
+            bitmap_height = alpha_max_y - alpha_min_y + 1
+        End If
+
+        bearing_x = alpha_min_x
+        If min_x < 0 Then bearing_x += min_x
+        bearing_y = alpha_min_y
+        If max_y > font_ascent Then _
+            bearing_y += font_ascent - max_y
+        If bearing_x < -32768 OrElse bearing_x > 32767 OrElse _
+           bearing_y < -32768 OrElse bearing_y > 32767 Then
+            Print "WARNING: Skipping out-of-range glyph " & Str(codepoint)
+            SDL_FreeSurface(surface)
+            Continue For
+        End If
+
+        pixel_count = bitmap_width * bitmap_height
+        glyph_record_size = FONT_PACK_GLYPH_HEADER_BYTES + _
+            CULngInt(pixel_count)
+        If glyph_record_size > FONT_PACK_MAX_BYTES OrElse _
+           pack_size > FONT_PACK_MAX_BYTES - glyph_record_size Then
+            Print "ERROR: Generated font pack would exceed 64 MiB."
+            SDL_FreeSurface(surface)
+            invalid_pack = -1
+            Exit For
+        End If
+
+        glyph_pixels = Space(pixel_count)
+        pixel_index = 0
+        For pixel_y As Integer = alpha_min_y To alpha_max_y
+            For pixel_x As Integer = alpha_min_x To alpha_max_x
+                pixel_value = *Cast( _
+                    ULong Ptr, pixels + (pixel_y * surface->pitch) + _
+                    (pixel_x * SizeOf(ULong)) _
+                )
+                alpha = (pixel_value Shr surface->format->Ashift) And &HFF
+                glyph_pixels[pixel_index] = alpha
+                pixel_index += 1
+            Next pixel_x
+        Next pixel_y
+
+        glyph_header = FontPackU32(codepoint) & _
+            FontPackU16(bitmap_width) & FontPackU16(bitmap_height) & _
+            FontPackU16(advance) & FontPackSigned16(bearing_x) & _
+            FontPackSigned16(bearing_y)
+        Put #file_number, , glyph_header
+        If pixel_count > 0 Then Put #file_number, , glyph_pixels
+        SDL_FreeSurface(surface)
+        glyph_count += 1
+        pack_size += glyph_record_size
+
+        If glyph_count Mod 4096 = 0 Then _
+            Print "Rendered " & Str(glyph_count) & " glyphs..."
+    Next codepoint
+
+    If invalid_pack <> 0 Then
+        Close #file_number
+        If Len(Dir(temporary_path)) > 0 Then Kill temporary_path
+        TTF_CloseFont(font)
+        TTF_Quit()
+        Return 0
+    End If
+
+    If glyph_count < 1 Then
+        Print "ERROR: The selected font has no renderable glyphs."
+        Close #file_number
+        If Len(Dir(temporary_path)) > 0 Then Kill temporary_path
+        TTF_CloseFont(font)
+        TTF_Quit()
+        Return 0
+    End If
+
+    Put #file_number, 9, FontPackU32(glyph_count)
+    Close #file_number
+    TTF_CloseFont(font)
+    TTF_Quit()
+
+    If Len(Dir(output_path)) > 0 Then Kill output_path
+    Name temporary_path As output_path
+    Print "Saved " & Str(glyph_count) & " glyphs to " & output_path
+    Return -1
+
+End Function
+
 Function GenerateFontData(ByRef font_path As String, _
                           ByVal point_size As Integer, _
                           ByRef symbol_prefix As String, _
                           ByRef data_output_path As String, _
-                          ByRef atlas_output_path As String) As Integer
+                          ByRef atlas_output_path As String, _
+                          ByRef unicode_list_path As String, _
+                          ByVal font_face_index As Integer, _
+                          ByRef source_license As String) As Integer
     Dim file_number As Integer
     Dim use_file As Integer
     Dim font As TTF_Font Ptr
@@ -284,13 +801,21 @@ Function GenerateFontData(ByRef font_path As String, _
     Dim white As SDL_Color
     Dim max_width As Integer = 0
     Dim max_height As Integer = 0
+    Dim unicode_list As String
+    Dim unicode_count As Integer
+    Dim unicode_position As Integer
+    Dim codepoint As UInteger
+
+    If ReadExtraGlyphList( _
+        unicode_list_path, unicode_list, unicode_count _
+    ) = 0 Then Return 0
 
     If TTF_Init() = -1 Then
         Print "ERROR: Could not initialize SDL_ttf."
         Return 0
     End If
 
-    font = TTF_OpenFont(font_path, point_size)
+    font = TTF_OpenFontIndex(font_path, point_size, font_face_index)
     If font = 0 Then
         Print "ERROR: Could not load font " & font_path
         TTF_Quit()
@@ -318,7 +843,9 @@ Function GenerateFontData(ByRef font_path As String, _
     white.b = 255
     white.a = 255
 
-    EmitFileHeader file_number, use_file, symbol_prefix, font_path, point_size
+    EmitFileHeader _
+        file_number, use_file, symbol_prefix, font_path, data_output_path, _
+        point_size, font_face_index, source_license
 
     For i As Integer = FIRST_GLYPH To LAST_GLYPH
         surface = TTF_RenderGlyph_Blended(font, i, white)
@@ -333,7 +860,41 @@ Function GenerateFontData(ByRef font_path As String, _
         End If
     Next i
 
+    unicode_position = 1
+    For i As Integer = 0 To unicode_count - 1
+        If NextExtraGlyph(unicode_list, unicode_position, codepoint) = 0 Then _
+            Exit For
+
+        /'
+            The legacy TTF_RenderGlyph_Blended entry point accepts only a
+            16-bit character. Unicode include glyphs use the 32-bit variant.
+        '/
+        If TTF_GlyphIsProvided32(font, codepoint) = 0 Then
+            Print "ERROR: Font does not contain Unicode code point " & _
+                Str(codepoint)
+            If use_file <> 0 Then Close #file_number
+            TTF_CloseFont(font)
+            TTF_Quit()
+            Return 0
+        End If
+        surface = TTF_RenderGlyph32_Blended(font, codepoint, white)
+        If surface = 0 Then
+            Print "ERROR: Font does not contain Unicode code point " & _
+                Str(codepoint)
+            If use_file <> 0 Then Close #file_number
+            TTF_CloseFont(font)
+            TTF_Quit()
+            Return 0
+        End If
+
+        EmitGlyphData file_number, use_file, symbol_prefix, codepoint, surface
+        SDL_FreeSurface(surface)
+    Next i
+
     EmitInitBlock file_number, use_file, symbol_prefix
+    EmitUnicodeGlyphTable _
+        file_number, use_file, symbol_prefix, unicode_list, unicode_count
+    EmitFileFooter file_number, use_file, symbol_prefix, data_output_path
 
     If use_file <> 0 Then
         Close #file_number
@@ -360,6 +921,25 @@ Dim point_size As Integer = SafePointSize(Command(2))
 Dim symbol_prefix As String = Command(3)
 Dim data_output_path As String = Command(4)
 Dim atlas_output_path As String = Command(5)
+Dim unicode_list_path As String = Command(6)
+Dim font_face_index As Integer = ValInt(Command(7))
+Dim source_license As String = Command(8)
+
+If LCase(Command(1)) = "--pack" Then
+    Dim As String pack_font_path = Command(2)
+    Dim As Integer pack_point_size = SafePointSize(Command(3))
+    Dim As String pack_output_path = Command(4)
+    Dim As Integer pack_face_index = ValInt(Command(5))
+
+    If pack_font_path = "" OrElse pack_output_path = "" Then
+        PrintUsage
+        End 1
+    End If
+    If GenerateFontPack( _
+        pack_font_path, pack_point_size, pack_output_path, pack_face_index _
+    ) = 0 Then End 1
+    End 0
+End If
 
 If LCase(font_path) = "--help" Or font_path = "/?" Then
     PrintUsage
@@ -374,8 +954,15 @@ If Len(symbol_prefix) = 0 Then
     symbol_prefix = "font"
 End If
 
+If font_face_index < 0 Then
+    Print "ERROR: Font face index cannot be negative."
+    End 1
+End If
+
 If GenerateFontData(font_path, point_size, symbol_prefix, _
-                    data_output_path, atlas_output_path) = 0 Then
+                    data_output_path, atlas_output_path, _
+                    unicode_list_path, font_face_index, _
+                    source_license) = 0 Then
     End 1
 End If
 

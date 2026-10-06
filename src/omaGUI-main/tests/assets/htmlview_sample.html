@@ -1,0 +1,64 @@
+<!--
+    Project: omaGUI HTML Viewer Tests
+    File: htmlview_sample.html
+
+    Purpose:
+
+        Provide one deterministic document covering the supported display
+        subset used by the HTML viewer smoke test.
+
+    This file intentionally does NOT contain:
+
+        Network resources or application-specific DD data.
+-->
+<!doctype html>
+<html>
+<head>
+    <title>Device &amp; Valve Help</title>
+    <style>.hidden { display: none; }</style>
+    <script>this script text must not be displayed</script>
+</head>
+<body bgcolor="#f8f8f4" text="#202428" link="#164c9c">
+    <h1 align="center">Wireless Valve Help</h1>
+    <p>
+        A &amp; B use <strong>bold status</strong>,
+        <em>ordinary emphasis</em>, and
+        <a href="dd:item/42?mode=read&amp;safe=yes">device documentation</a>.
+    </p>
+    <p style="color: #803010; background-color: #fff4d0">
+        Inline color and a conservative background style are supported.
+    </p>
+    <ul>
+        <li>Read the current position.</li>
+        <li>Check the actuator supply.</li>
+    </ul>
+    <ol>
+        <li>Open the item.</li>
+        <li>Confirm the requested value.</li>
+    </ol>
+    <table>
+        <tr><th>Name</th><th>Value</th></tr>
+        <tr><td><a href="dd:item/table-position">Position</a></td><td>52 percent</td></tr>
+    </table>
+    <dl>
+        <dt>DD item</dt>
+        <dd>A navigable device-description entry.</dd>
+    </dl>
+    <pre>command  42
+value    52</pre>
+    <hr>
+    <p>
+        A missing image deliberately uses its alternative text:
+        <img src="not-loaded.png" alt="Valve &amp;amp; actuator">
+    </p>
+    <p>A local raster image follows:</p>
+    <img src="../../assets/fonts/font_arial_10_regular.bmp"
+         alt="Decoded local font atlas">
+    <blockquote>
+        This final paragraph is long enough to wrap in a narrow viewer and
+        makes wheel, keyboard, and scrollbar behavior deterministic in the
+        automated test.
+    </blockquote>
+</body>
+</html>
+<!-- end of htmlview_sample.html -->

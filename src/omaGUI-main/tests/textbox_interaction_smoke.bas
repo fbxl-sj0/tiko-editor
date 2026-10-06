@@ -14,6 +14,7 @@
         - place a cursor from proportional-font mouse coordinates
         - drag and render a bounded text selection
         - exercise Ctrl+C, Ctrl+X, Ctrl+V, and Ctrl+A
+        - retain complete Control shortcuts which occur between GUI updates
         - extend selection with Shift navigation
         - preserve selection through Undo
         - keep long-line cursors horizontally visible and clipped
@@ -107,12 +108,7 @@ End Sub
 
 Sub textboxInteractionSmoke_ControlKey(ByVal keyCode As Integer)
 
-    input_MockKey FB.SC_CONTROL, 1
-    input_MockKey keyCode, 1
-    gui_UpdateAll()
-    input_MockKey keyCode, 0
-    gui_UpdateAll()
-    input_MockKey FB.SC_CONTROL, 0
+    input_MockControlShortcut keyCode
     gui_UpdateAll()
 
 End Sub
@@ -123,7 +119,7 @@ End Sub
 
 textboxInteractionSmoke_OriginalClipboard = clipboard_GetText()
 backend_Init _
-    TEXTBOX_INTERACTION_SCREEN_W, TEXTBOX_INTERACTION_SCREEN_H, 1
+    TEXTBOX_INTERACTION_SCREEN_W, TEXTBOX_INTERACTION_SCREEN_H, 0
 textboxInteractionSmoke_BackendActive = 1
 
 Dim screenWidth As Integer
@@ -262,6 +258,12 @@ If textData->sel_start <> 0 OrElse _
         TEXTBOX_INTERACTION_EXIT_KEYBOARD
 End If
 
+/'
+    Delivering text in the shortcut frame models an application which was
+    busy long enough for Ctrl+A, its release, and the first typed characters
+    to reach the native event queue together.
+'/
+input_MockControlShortcut FB.SC_A
 input_MockText "replacement"
 gui_UpdateAll()
 

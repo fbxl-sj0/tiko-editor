@@ -6,14 +6,15 @@
 
     Purpose:
 
-        Exchange bounded plain text with the host clipboard.
+        Exchange bounded plain text through a portable process-local clipboard
+        and, when an application explicitly requests it, a host bridge.
 
     Responsibilities:
 
-        - use the Win32 CF_TEXT clipboard on Windows
-        - use xclip when it is available on Unix-like desktops
-        - retain an in-process fallback when a platform clipboard is absent
-        - permit applications to force the in-process portable fallback
+        - make the bounded process-local clipboard the default implementation
+        - use the Win32 text clipboard only in opted-in Windows builds
+        - use xclip only in opted-in supported Unix desktop builds
+        - allow applications to force the portable implementation
         - reject unbounded clipboard payload growth
 
     This file intentionally does NOT contain:
@@ -27,19 +28,42 @@
 
 #include once "src/backend/clipboard.bi"
 
-#if defined(OMAGUI_PORTABLE_ONLY)
-    /' No platform declarations are imported in portable-only builds. '/
-#elseif defined(__FB_WIN32__)
-    #include once "windows.bi"
-#elseif defined(__FB_LINUX__) or defined(__FB_FREEBSD__) or defined(__FB_OPENBSD__)
-    #include once "crt.bi"
-#endif
+/'
+    Clipboard backend selection
+
+    The default build uses only omaGUI's bounded process-local text store. This
+    matters for applications which need one native FreeBASIC source path across
+    hosted and non-hosted targets.
+
+    An application may define OMAGUI_ENABLE_HOST_CLIPBOARD before
+    OMAGUI_IMPLEMENTATION to opt into the matching host bridge. The existing
+    OMAGUI_DISABLE_HOST_CLIPBOARD and OMAGUI_PORTABLE_ONLY switches override
+    that opt-in and always select the process-local implementation.
+'/
+#If Defined(OMAGUI_ENABLE_HOST_CLIPBOARD) AndAlso _
+    Not Defined(OMAGUI_DISABLE_HOST_CLIPBOARD) AndAlso _
+    Not Defined(OMAGUI_PORTABLE_ONLY) AndAlso _
+    Defined(__FB_WIN32__)
+    #Define OMAGUI_CLIPBOARD_WIN32
+    #Include Once "windows.bi"
+#ElseIf Defined(OMAGUI_ENABLE_HOST_CLIPBOARD) AndAlso _
+    Not Defined(OMAGUI_DISABLE_HOST_CLIPBOARD) AndAlso _
+    Not Defined(OMAGUI_PORTABLE_ONLY) AndAlso _
+    (Defined(__FB_LINUX__) Or Defined(__FB_FREEBSD__) Or _
+     Defined(__FB_OPENBSD__))
+    #Define OMAGUI_CLIPBOARD_XCLIP
+#EndIf
 
 ' -------------------------------------------------------------------------
 ' Process-local fallback
 ' -------------------------------------------------------------------------
 
-' This is the boundary-owned fallback used only when the host API is absent. FB-LINTER: DISABLE-NEXT-LINE FBL301
+/'
+    FreeBASIC does not currently expose a common host-clipboard API. This
+    bounded copy remains available when the selected host integration cannot
+    be compiled or reached, and it keeps intra-application editing reliable.
+'/
+' This is boundary-owned process state. FB-LINTER: DISABLE-NEXT-LINE FBL301
 Dim Shared clipboard_FallbackText As String
 
 
@@ -54,10 +78,10 @@ Private Function clipboard_BoundedText(ByVal textValue As String) As String
 End Function
 
 ' -------------------------------------------------------------------------
-' Windows clipboard helpers
+' Windows clipboard backend
 ' -------------------------------------------------------------------------
 
-#if defined(__FB_WIN32__) and not defined(OMAGUI_PORTABLE_ONLY)
+#If Defined(OMAGUI_CLIPBOARD_WIN32)
 
 Const CLIPBOARD_WINDOWS_OPEN_ATTEMPTS As Integer = 5
 Const CLIPBOARD_WINDOWS_RETRY_MILLISECONDS As Integer = 1
@@ -77,7 +101,7 @@ End Function
 
 Private Function clipboard_WindowsGetText() As String
 
-    Dim byteCount As ULongInt
+    Dim byteCount As SIZE_T
     Dim clipboardHandle As HANDLE
     Dim clipboardMemory As Any Ptr
     Dim resultText As String
@@ -98,7 +122,7 @@ Private Function clipboard_WindowsGetText() As String
                 resultText = clipboard_BoundedText(resultText)
             End If
 
-            ' GlobalUnlock is imported only inside the Win32 branch. FB-LINTER: DISABLE-NEXT-LINE FBL310
+            ' Win32 import exists only inside this backend. FB-LINTER: DISABLE-NEXT-LINE FBL310
             GlobalUnlock clipboardHandle
         End If
     End If
@@ -109,7 +133,9 @@ Private Function clipboard_WindowsGetText() As String
 End Function
 
 
-Private Function clipboard_WindowsSetText(ByVal textValue As String) As Integer
+Private Function clipboard_WindowsSetText( _
+    ByVal textValue As String _
+) As Integer
 
     Dim allocationFlags As UINT
     Dim clipboardHandle As HANDLE
@@ -123,7 +149,7 @@ Private Function clipboard_WindowsSetText(ByVal textValue As String) As Integer
         Return 0
     End If
 
-    ' These flags select an owned, movable, zero-filled Win32 block. FB-LINTER: DISABLE-NEXT-LINE FBL310
+    ' Movable ownership is required by SetClipboardData. FB-LINTER: DISABLE-NEXT-LINE FBL310
     allocationFlags = GMEM_MOVEABLE Or GMEM_ZEROINIT
     clipboardHandle = GlobalAlloc(allocationFlags, Len(textValue) + 1)
 
@@ -135,23 +161,78 @@ Private Function clipboard_WindowsSetText(ByVal textValue As String) As Integer
     clipboardMemory = GlobalLock(clipboardHandle)
 
     If clipboardMemory = 0 Then
-        GlobalFree clipboardHandle ' Win32 conditional import. FB-LINTER: DISABLE-LINE FBL310
+        GlobalFree clipboardHandle ' Conditional Win32 import. FB-LINTER: DISABLE-LINE FBL310
         CloseClipboard()
         Return 0
     End If
 
     *Cast(ZString Ptr, clipboardMemory) = textValue
-    GlobalUnlock clipboardHandle ' Win32 conditional import. FB-LINTER: DISABLE-LINE FBL310
+    GlobalUnlock clipboardHandle ' Conditional Win32 import. FB-LINTER: DISABLE-LINE FBL310
     clipboardResult = SetClipboardData(CF_TEXT, clipboardHandle)
 
-    If clipboardResult = 0 Then GlobalFree clipboardHandle ' Win32 conditional import. FB-LINTER: DISABLE-LINE FBL310
+    If clipboardResult = 0 Then _
+        GlobalFree clipboardHandle ' Conditional Win32 import. FB-LINTER: DISABLE-LINE FBL310
     CloseClipboard()
 
     Return IIf(clipboardResult <> 0, 1, 0)
 
 End Function
 
-#endif
+#EndIf
+
+' FreeBASIC pipe files let Unix hosts read arbitrary bytes in bounded chunks.
+#If Defined(OMAGUI_CLIPBOARD_XCLIP)
+Const CLIPBOARD_XCLIP_READ_CHUNK_BYTES As Integer = 4096
+
+Private Function clipboard_XclipGetText() As String
+    Dim As Integer fileNumber = FreeFile
+    Dim As Integer ioResult
+    Dim As Integer bytesRead
+    Dim As Integer requestBytes
+    Dim As String resultText
+    Dim As String chunkText
+
+    If Environ("DISPLAY") = "" Then Return clipboard_FallbackText
+    If Shell("command -v xclip >/dev/null 2>&1") <> 0 Then _
+        Return clipboard_FallbackText
+
+    ioResult = Open Pipe( _
+        "xclip -o -selection clipboard 2>/dev/null", _
+        For Input As #fileNumber _
+    )
+    If ioResult <> 0 Then Return clipboard_FallbackText
+    resultText = Space(CLIPBOARD_MAX_TEXT_BYTES)
+
+    While bytesRead < CLIPBOARD_MAX_TEXT_BYTES
+        requestBytes = CLIPBOARD_XCLIP_READ_CHUNK_BYTES
+        If requestBytes > CLIPBOARD_MAX_TEXT_BYTES - bytesRead Then _
+            requestBytes = CLIPBOARD_MAX_TEXT_BYTES - bytesRead
+        chunkText = Input$(requestBytes, #fileNumber)
+        If chunkText = "" Then Exit While
+        Mid(resultText, bytesRead + 1, Len(chunkText)) = chunkText
+        bytesRead += Len(chunkText)
+    Wend
+
+    Close #fileNumber
+    Return Left(resultText, bytesRead)
+End Function
+
+Private Sub clipboard_XclipSetText(ByVal textValue As String)
+    Dim As Integer fileNumber = FreeFile
+    Dim As Integer ioResult
+
+    If Environ("DISPLAY") = "" Then Exit Sub
+    If Shell("command -v xclip >/dev/null 2>&1") <> 0 Then Exit Sub
+
+    ioResult = Open Pipe( _
+        "xclip -selection clipboard 2>/dev/null", _
+        For Output As #fileNumber _
+    )
+    If ioResult <> 0 Then Exit Sub
+    If textValue <> "" Then Print #fileNumber, textValue;
+    Close #fileNumber
+End Sub
+#EndIf
 
 ' -------------------------------------------------------------------------
 ' Public clipboard API
@@ -159,34 +240,16 @@ End Function
 
 Function clipboard_GetText() As String
 
+#If Defined(OMAGUI_CLIPBOARD_WIN32)
     Dim resultText As String
 
-#if defined(OMAGUI_PORTABLE_ONLY)
-    Return clipboard_BoundedText(clipboard_FallbackText)
-#elseif defined(__FB_WIN32__)
     resultText = clipboard_WindowsGetText()
     Return clipboard_BoundedText(resultText)
-#elseif defined(__FB_LINUX__) or defined(__FB_FREEBSD__) or defined(__FB_OPENBSD__)
-    Dim clipboardFile As FILE Ptr
-    Dim readBuffer As ZString * 1024
-
-    clipboardFile = popen("xclip -o -selection clipboard 2>/dev/null", "r")
-
-    If clipboardFile <> 0 Then
-        While fgets(readBuffer, SizeOf(readBuffer), clipboardFile) <> 0 AndAlso _
-              Len(resultText) < CLIPBOARD_MAX_TEXT_BYTES
-            resultText &= readBuffer
-        Wend
-
-        pclose clipboardFile ' Unix CRT conditional import. FB-LINTER: DISABLE-LINE FBL310
-        resultText = clipboard_BoundedText(resultText)
-    End If
-
-    If resultText = "" Then resultText = clipboard_FallbackText
-    Return clipboard_BoundedText(resultText)
-#else
+#ElseIf Defined(OMAGUI_CLIPBOARD_XCLIP)
+    Return clipboard_BoundedText(clipboard_XclipGetText())
+#Else
     Return clipboard_BoundedText(clipboard_FallbackText)
-#endif
+#EndIf
 
 End Function
 
@@ -195,21 +258,19 @@ Sub clipboard_SetText(ByVal txt As String)
 
     clipboard_FallbackText = clipboard_BoundedText(txt)
 
-#if defined(OMAGUI_PORTABLE_ONLY)
-    /' The process-local value assigned above is the complete implementation. '/
-#elseif defined(__FB_WIN32__)
+#If Defined(OMAGUI_CLIPBOARD_WIN32)
     clipboard_WindowsSetText clipboard_FallbackText
-#elseif defined(__FB_LINUX__) or defined(__FB_FREEBSD__) or defined(__FB_OPENBSD__)
-    Dim clipboardFile As FILE Ptr
-
-    clipboardFile = popen("xclip -selection clipboard 2>/dev/null", "w")
-
-    If clipboardFile <> 0 Then
-        fputs clipboard_FallbackText, clipboardFile ' Unix CRT conditional import. FB-LINTER: DISABLE-LINE FBL310
-        pclose clipboardFile ' Unix CRT conditional import. FB-LINTER: DISABLE-LINE FBL310
-    End If
-#endif
+#ElseIf Defined(OMAGUI_CLIPBOARD_XCLIP)
+    clipboard_XclipSetText clipboard_FallbackText
+#EndIf
 
 End Sub
+
+#If Defined(OMAGUI_CLIPBOARD_WIN32)
+    #Undef OMAGUI_CLIPBOARD_WIN32
+#EndIf
+#If Defined(OMAGUI_CLIPBOARD_XCLIP)
+    #Undef OMAGUI_CLIPBOARD_XCLIP
+#EndIf
 
 ' end of clipboard.bas

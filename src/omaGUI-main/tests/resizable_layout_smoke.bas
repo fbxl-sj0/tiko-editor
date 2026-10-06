@@ -9,8 +9,9 @@
 
     Responsibilities:
         - confirm the backend requests a resizable native window
-        - resize and maximize the real Windows editor-style surface
+        - resize the real gfxlib surface through backend_SetWindowMode
         - verify right, bottom, stretch, and centered anchor behavior
+        - verify maximize and restore reflow anchored window children
         - exercise page flipping after framebuffer dimensions change
 
     This file intentionally does NOT contain:
@@ -20,8 +21,6 @@
 '/
 
 #lang "fb"
-
-#include once "windows.bi"
 
 #define OMAGUI_IMPLEMENTATION
 #include once "../omaGUI.bi"
@@ -34,6 +33,8 @@ Const RESIZE_SMOKE_INITIAL_W As Integer = 640
 Const RESIZE_SMOKE_INITIAL_H As Integer = 480
 Const RESIZE_SMOKE_LAYOUT_W As Integer = 900
 Const RESIZE_SMOKE_LAYOUT_H As Integer = 700
+Const RESIZE_SMOKE_SECOND_W As Integer = 960
+Const RESIZE_SMOKE_SECOND_H As Integer = 740
 Const RESIZE_SMOKE_POLL_COUNT As Integer = 200
 Const RESIZE_SMOKE_POLL_MILLISECONDS As Integer = 10
 
@@ -51,7 +52,7 @@ End Sub
 ' -------------------------------------------------------------------------
 
 backend_Init _
-    RESIZE_SMOKE_INITIAL_W, RESIZE_SMOKE_INITIAL_H, 1, _
+    RESIZE_SMOKE_INITIAL_W, RESIZE_SMOKE_INITIAL_H, 0, _
     BACKEND_WINDOW_RESIZABLE
 
 Dim As Integer initialDrawableWidth
@@ -110,6 +111,22 @@ If bottomButton->x <> 10 OrElse bottomButton->y <> 480 OrElse _
     resize_smoke_Fail "child bottom anchor did not follow its parent", 5
 End If
 
+If subwindow_SetWindowState(dock, SUBWINDOW_STATE_MAXIMIZED) = 0 OrElse _
+   dock->x <> 0 OrElse dock->y <> 0 OrElse _
+   dock->w <> RESIZE_SMOKE_LAYOUT_W OrElse _
+   dock->h <> RESIZE_SMOKE_LAYOUT_H OrElse _
+   bottomButton->x <> 10 OrElse bottomButton->y <> 660 Then
+    resize_smoke_Fail _
+        "maximized parent did not reflow its anchored child", 12
+End If
+If subwindow_SetWindowState(dock, SUBWINDOW_STATE_NORMAL) = 0 OrElse _
+   dock->x <> 660 OrElse dock->y <> 40 OrElse _
+   dock->w <> 200 OrElse dock->h <> 520 OrElse _
+   bottomButton->x <> 10 OrElse bottomButton->y <> 480 Then
+    resize_smoke_Fail _
+        "restored parent did not restore its anchored child", 13
+End If
+
 If centered->x <> 230 OrElse centered->y <> 210 Then
     resize_smoke_Fail "unanchored axes did not remain centered", 6
 End If
@@ -120,28 +137,21 @@ If stretch->x <> 20 OrElse stretch->y <> 380 OrElse _
 End If
 
 /'
-    gfxlib owns its window on another thread. SetWindowPos and ShowWindow are
-    therefore followed by bounded polling of the drawable dimensions rather
-    than a timing-sensitive fixed delay.
+    Window-mode changes recreate both gfx pages through the backend. Bounded
+    polling still allows an asynchronous host window backend to publish its
+    new drawable dimensions.
 '/
-Dim As LongInt nativeHandleValue
-Dim As HWND nativeHandle
 Dim As Integer drawableWidth
 Dim As Integer drawableHeight
 Dim As Integer resizedWidth
 Dim As Integer resizedHeight
 
-ScreenControl FB.GET_WINDOW_HANDLE, nativeHandleValue
-nativeHandle = Cast(HWND, nativeHandleValue)
-
-If nativeHandle = 0 Then
-    resize_smoke_Fail "gfxlib did not expose a native window handle", 8
+If backend_SetWindowMode( _
+    RESIZE_SMOKE_LAYOUT_W, RESIZE_SMOKE_LAYOUT_H, _
+    BACKEND_WINDOW_RESIZABLE _
+) = 0 Then
+    resize_smoke_Fail "backend could not create the first resized surface", 8
 End If
-
-ShowWindow nativeHandle, SW_RESTORE
-SetWindowPos _
-    nativeHandle, 0, 0, 0, RESIZE_SMOKE_LAYOUT_W, RESIZE_SMOKE_LAYOUT_H, _
-    SWP_NOMOVE Or SWP_NOZORDER
 
 For pollIndex As Integer = 1 To RESIZE_SMOKE_POLL_COUNT
     backend_GetSize drawableWidth, drawableHeight
@@ -152,7 +162,7 @@ Next pollIndex
 
 If drawableWidth <= RESIZE_SMOKE_INITIAL_W OrElse _
    drawableHeight <= RESIZE_SMOKE_INITIAL_H Then
-    resize_smoke_Fail "native resize did not enlarge the drawable area", 9
+    resize_smoke_Fail "window-mode change did not enlarge the drawable area", 9
 End If
 
 resizedWidth = drawableWidth
@@ -160,17 +170,23 @@ resizedHeight = drawableHeight
 backend_Clear RGB(24, 32, 40)
 backend_Flip
 
-ShowWindow nativeHandle, SW_MAXIMIZE
+If backend_SetWindowMode( _
+    RESIZE_SMOKE_SECOND_W, RESIZE_SMOKE_SECOND_H, _
+    BACKEND_WINDOW_RESIZABLE _
+) = 0 Then
+    resize_smoke_Fail "backend could not create the second resized surface", 10
+End If
 
 For pollIndex As Integer = 1 To RESIZE_SMOKE_POLL_COUNT
     backend_GetSize drawableWidth, drawableHeight
-    If drawableWidth > resizedWidth OrElse drawableHeight > resizedHeight Then _
-        Exit For
+    If drawableWidth = RESIZE_SMOKE_SECOND_W AndAlso _
+       drawableHeight = RESIZE_SMOKE_SECOND_H Then Exit For
     Sleep RESIZE_SMOKE_POLL_MILLISECONDS, 1
 Next pollIndex
 
-If drawableWidth <= resizedWidth AndAlso drawableHeight <= resizedHeight Then
-    resize_smoke_Fail "maximize did not change the drawable area", 10
+If drawableWidth <> RESIZE_SMOKE_SECOND_W OrElse _
+   drawableHeight <> RESIZE_SMOKE_SECOND_H Then
+    resize_smoke_Fail "second mode change did not resize the drawable area", 10
 End If
 
 gui_UpdateAll

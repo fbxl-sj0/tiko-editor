@@ -8,6 +8,11 @@
 
         Store one generated bitmap font for the omaGUI renderer.
 
+    Responsibilities:
+
+        - own printable-ASCII glyph alpha data for Arial 12 bold
+        - initialize the bounded glyph-pointer lookup table
+
     Source font:
 
         C:\Windows\Fonts\arialbd.ttf

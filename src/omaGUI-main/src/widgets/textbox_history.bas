@@ -39,6 +39,10 @@ Private Sub textboxHistory_ClearEntry(ByRef entryData As TextBoxHistoryEntry)
     entryData.sel_start = 0
     entryData.sel_end = 0
     entryData.selection_anchor = 0
+    entryData.cursor_virtual_space = 0
+    entryData.sel_start_virtual_space = 0
+    entryData.sel_end_virtual_space = 0
+    entryData.selection_anchor_virtual_space = 0
     entryData.scroll_offset = 0
     entryData.v_scroll = 0
 
@@ -55,6 +59,11 @@ Private Sub textboxHistory_Capture( _
     entryData.sel_start = textData.sel_start
     entryData.sel_end = textData.sel_end
     entryData.selection_anchor = textData.selection_anchor
+    entryData.cursor_virtual_space = textData.cursor_virtual_space
+    entryData.sel_start_virtual_space = textData.sel_start_virtual_space
+    entryData.sel_end_virtual_space = textData.sel_end_virtual_space
+    entryData.selection_anchor_virtual_space = _
+        textData.selection_anchor_virtual_space
     entryData.scroll_offset = textData.scroll_offset
     entryData.v_scroll = textData.v_scroll
 
@@ -79,8 +88,8 @@ Private Sub textboxHistory_Restore( _
     ByRef entryData As TextBoxHistoryEntry _
 )
 
+    If textData.text <> entryData.text Then textData.change_serial += 1
     textData.text = entryData.text
-    textData.change_serial += 1
     textData.cursor_pos = textboxHistory_ClampPosition( _
         textData.text, entryData.cursor_pos _
     )
@@ -93,6 +102,23 @@ Private Sub textboxHistory_Restore( _
     textData.selection_anchor = textboxHistory_ClampPosition( _
         textData.text, entryData.selection_anchor _
     )
+    textData.cursor_virtual_space = textbox_ClampVirtualSpace( _
+        @textData, textData.cursor_pos, entryData.cursor_virtual_space _
+    )
+    textData.sel_start_virtual_space = textbox_ClampVirtualSpace( _
+        @textData, textData.sel_start, entryData.sel_start_virtual_space _
+    )
+    textData.sel_end_virtual_space = textbox_ClampVirtualSpace( _
+        @textData, textData.sel_end, entryData.sel_end_virtual_space _
+    )
+    textData.selection_anchor_virtual_space = textbox_ClampVirtualSpace( _
+        @textData, textData.selection_anchor, _
+        entryData.selection_anchor_virtual_space _
+    )
+    ' Undo itself moved the caret. The update loop must not interpret that as
+    ' an external direct cursor assignment and discard restored virtual space.
+    textData.observed_cursor_pos = textData.cursor_pos
+    textData.observed_cursor_virtual_space = textData.cursor_virtual_space
     textData.scroll_offset = entryData.scroll_offset
     textData.v_scroll = entryData.v_scroll
 
@@ -262,6 +288,7 @@ Function textbox_BeginEdit( _
 
     If w = 0 OrElse w->data = 0 Then Exit Function
     textData = Cast(TextBoxData Ptr, w->data)
+    If textData->read_only <> 0 Then Exit Function
 
     If groupId < TEXTBOX_HISTORY_GROUP_NONE Then _
         groupId = TEXTBOX_HISTORY_GROUP_NONE
@@ -305,6 +332,26 @@ Sub textbox_EndEditGroup(ByVal w As Widget Ptr)
 End Sub
 
 
+Function textbox_CanUndo(ByVal w As Widget Ptr) As Integer
+    Dim textData As TextBoxData Ptr
+
+    If w = 0 OrElse w->data = 0 OrElse w->enabled = 0 Then Return 0
+    textData = Cast(TextBoxData Ptr, w->data)
+    If textData->read_only <> 0 Then Return 0
+    Return IIf(textData->undoCount > 0, -1, 0)
+End Function
+
+
+Function textbox_CanRedo(ByVal w As Widget Ptr) As Integer
+    Dim textData As TextBoxData Ptr
+
+    If w = 0 OrElse w->data = 0 OrElse w->enabled = 0 Then Return 0
+    textData = Cast(TextBoxData Ptr, w->data)
+    If textData->read_only <> 0 Then Return 0
+    Return IIf(textData->redoCount > 0, -1, 0)
+End Function
+
+
 Function textbox_Undo(ByVal w As Widget Ptr) As Integer
 
     Dim currentEntry As TextBoxHistoryEntry
@@ -315,6 +362,7 @@ Function textbox_Undo(ByVal w As Widget Ptr) As Integer
 
     If w = 0 OrElse w->data = 0 Then Exit Function
     textData = Cast(TextBoxData Ptr, w->data)
+    If textData->read_only <> 0 Then Exit Function
 
     If textData->undoCount <= 0 OrElse _
        Len(textData->text) > TEXTBOX_HISTORY_MAX_STORED_BYTES Then
@@ -351,6 +399,7 @@ Function textbox_Redo(ByVal w As Widget Ptr) As Integer
 
     If w = 0 OrElse w->data = 0 Then Exit Function
     textData = Cast(TextBoxData Ptr, w->data)
+    If textData->read_only <> 0 Then Exit Function
 
     If textData->redoCount <= 0 OrElse _
        Len(textData->text) > TEXTBOX_HISTORY_MAX_STORED_BYTES Then
@@ -390,9 +439,6 @@ Function textbox_SetText( _
     If w = 0 OrElse w->data = 0 Then Exit Function
     textData = Cast(TextBoxData Ptr, w->data)
 
-    If textData->max_text_bytes > 0 AndAlso _
-       Len(textValue) > textData->max_text_bytes Then Exit Function
-
     If resetHistory = 0 AndAlso textData->text <> textValue Then _
         textbox_BeginEdit w, TEXTBOX_HISTORY_GROUP_NONE
 
@@ -402,6 +448,10 @@ Function textbox_SetText( _
     textData->sel_start = textData->cursor_pos
     textData->sel_end = textData->cursor_pos
     textData->selection_anchor = textData->cursor_pos
+    textData->cursor_virtual_space = 0
+    textData->sel_start_virtual_space = 0
+    textData->sel_end_virtual_space = 0
+    textData->selection_anchor_virtual_space = 0
     textData->scroll_offset = 0
     textData->v_scroll = 0
     textData->viewport_dirty = -1

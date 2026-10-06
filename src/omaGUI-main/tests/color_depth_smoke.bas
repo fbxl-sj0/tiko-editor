@@ -34,7 +34,7 @@ Dim As ULong pixelValue
 Dim As Integer redValue
 
 backend_Init _
-    320, 240, -1, BACKEND_WINDOW_RESIZABLE, _
+    320, 240, 0, BACKEND_WINDOW_RESIZABLE, _
     BACKEND_COLOR_DEPTH_TRUE_COLOR
 
 If backend_IsResizable() = 0 Then

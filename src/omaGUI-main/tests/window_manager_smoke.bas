@@ -16,6 +16,7 @@
         - prove children cannot draw or receive input outside the client area
         - prove close and reopen update the complete child tree
         - prove list selection, keyboard focus, and wheel scrolling work
+        - prove a callback may remove its own tree and add its replacement
 
     This file intentionally does NOT contain:
 
@@ -41,6 +42,10 @@ Const WINDOW_MANAGER_HEIGHT As Integer = 300
 Dim Shared As Integer backButtonClicks
 Dim Shared As Integer frontButtonClicks
 Dim Shared As Integer clippedButtonClicks
+Dim Shared As Integer replacementButtonClicks
+Dim Shared As Integer selfRemovalClicks
+Dim Shared As Widget Ptr replacementWindow
+Dim Shared As Widget Ptr replacementButton
 
 Private Sub windowManager_OnBackButton(ByVal w As Widget Ptr)
     backButtonClicks += 1
@@ -57,6 +62,30 @@ Private Sub windowManager_OnClippedButton(ByVal w As Widget Ptr)
 End Sub
 
 
+Private Sub windowManager_OnReplacementButton(ByVal w As Widget Ptr)
+    replacementButtonClicks += 1
+End Sub
+
+
+Private Sub windowManager_OnSelfRemoval(ByVal w As Widget Ptr)
+
+    selfRemovalClicks += 1
+    gui_RemoveWidget "window_self_remove"
+    replacementWindow = subwindow_Create( _
+        "window_replacement", "Replacement", 80, 40, 190, 120 _
+    )
+    replacementButton = button_Create( _
+        "window_replacement_button", "Ready", 40, 48, 90, 28, _
+        @windowManager_OnReplacementButton _
+    )
+    If replacementWindow = 0 OrElse replacementButton = 0 Then Exit Sub
+    gui_AddWidget replacementWindow
+    gui_AddWidget replacementButton
+    gui_SetParent replacementButton, replacementWindow
+
+End Sub
+
+
 Private Sub windowManager_Click(ByVal x As Integer, ByVal y As Integer)
     input_MockMouse x, y, 1
     gui_UpdateAll
@@ -70,6 +99,7 @@ Private Sub windowManager_Fail( _
 )
     gui_ResetForTest
     backend_Exit
+    Screen 0
     Print "window manager smoke failed: " & messageText
     End exitCode
 End Sub
@@ -81,9 +111,12 @@ Dim As Widget Ptr clippedButton
 Dim As Widget Ptr frontWindow
 Dim As Widget Ptr frontButton
 Dim As Widget Ptr itemList
+Dim As Widget Ptr selfRemovalWindow
+Dim As Widget Ptr selfRemovalButton
 Dim As ULong backgroundColor = RGB(10, 20, 30)
 
-backend_Init WINDOW_MANAGER_WIDTH, WINDOW_MANAGER_HEIGHT, -1
+backend_Init WINDOW_MANAGER_WIDTH, WINDOW_MANAGER_HEIGHT, 0
+If ScreenPtr = 0 Then windowManager_Fail "graphics mode was not created", 15
 gui_Init
 input_ResetForTest
 
@@ -154,7 +187,14 @@ If Point(30, 175) <> backgroundColor Then
     windowManager_Fail "child rendered outside parent client", 5
 End If
 
-windowManager_Click 240, 75
+' Only the right edge of this title is exposed above the rear window. The
+' old x=240 lands on Maximize now, which moves the list away from the wheel.
+windowManager_Click frontWindow->ax + frontWindow->w - 2, frontWindow->ay + 5
+Dim As Integer raisedWindowState
+If subwindow_GetWindowState(frontWindow, raisedWindowState) = 0 OrElse _
+   raisedWindowState <> SUBWINDOW_STATE_NORMAL Then
+    windowManager_Fail "raising the window changed its geometry", 14
+End If
 input_MockMouse 120, 175, 0, -1
 gui_UpdateAll
 
@@ -190,8 +230,37 @@ If frontWindow->visible = 0 OrElse itemList->evis = 0 Then
     windowManager_Fail "reopen did not restore complete window tree", 10
 End If
 
+selfRemovalWindow = subwindow_Create( _
+    "window_self_remove", "Self removal", 80, 40, 190, 120 _
+)
+selfRemovalButton = button_Create( _
+    "window_self_remove_button", "Replace", 40, 48, 90, 28, _
+    @windowManager_OnSelfRemoval _
+)
+If selfRemovalWindow = 0 OrElse selfRemovalButton = 0 Then
+    windowManager_Fail "self-removal widget allocation failed", 11
+End If
+gui_AddWidget selfRemovalWindow
+gui_AddWidget selfRemovalButton
+gui_SetParent selfRemovalButton, selfRemovalWindow
+
+windowManager_Click 165, 112
+If selfRemovalClicks <> 1 OrElse _
+   gui_FindWidget("window_self_remove") <> 0 OrElse _
+   gui_FindWidget("window_self_remove_button") <> 0 OrElse _
+   replacementWindow = 0 OrElse replacementButton = 0 OrElse _
+   gui_FindWidget("window_replacement") <> replacementWindow Then
+    windowManager_Fail "callback did not safely replace its own tree", 12
+End If
+
+windowManager_Click 165, 112
+If replacementButtonClicks <> 1 Then
+    windowManager_Fail "replacement tree did not receive input", 13
+End If
+
 gui_ResetForTest
 backend_Exit
+Screen 0
 Print "window manager smoke OK"
 End 0
 
