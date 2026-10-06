@@ -18,6 +18,20 @@
         - decode classic ICO bitmaps and their transparent masks
         - return owned 32-bit gfxlib image buffers with checked dimensions
 
+    Ownership:
+
+        The caller owns a successfully loaded RasterImage and releases it with
+        rasterimage_Destroy. The loader closes its file handles and transient
+        files before returning.
+
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
 
         - progressive JPEG, animated GIF playback, or image encoding
@@ -153,8 +167,16 @@ End Function
 Function rasterimage_DetectFormat( _
     bytes() As UByte, ByVal byteCount As LongInt _
 ) As Integer
-    If LBound(bytes) <> 0 OrElse byteCount < 1 OrElse _
-       byteCount > CLngInt(UBound(bytes)) + 1 Then Return RASTERIMAGE_FORMAT_UNKNOWN
+    Dim As Integer firstIndex
+    Dim As Integer lastIndex
+
+    If byteCount < 1 Then Return RASTERIMAGE_FORMAT_UNKNOWN
+    ' FreeBASIC reports UBound=-1 for an unallocated dynamic array.
+    If UBound(bytes) < LBound(bytes) Then Return RASTERIMAGE_FORMAT_UNKNOWN
+    firstIndex = LBound(bytes)
+    lastIndex = UBound(bytes)
+    If firstIndex <> 0 OrElse lastIndex < firstIndex OrElse _
+       byteCount > CLngInt(lastIndex) + 1 Then Return RASTERIMAGE_FORMAT_UNKNOWN
     If byteCount >= 8 Then
         If bytes(0) = &h89 AndAlso bytes(1) = Asc("P") AndAlso _
            bytes(2) = Asc("N") AndAlso bytes(3) = Asc("G") AndAlso _

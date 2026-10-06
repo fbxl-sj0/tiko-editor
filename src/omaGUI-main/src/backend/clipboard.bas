@@ -17,6 +17,14 @@
         - allow applications to force the portable implementation
         - reject unbounded clipboard payload growth
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
 
         - widget focus or selection rules

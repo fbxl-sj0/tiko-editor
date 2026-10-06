@@ -13,6 +13,14 @@
         - expose one reset-interval decompression operation
         - keep codec state private to the archive implementation
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the chm_lzx component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - CHM directory or file lookup
@@ -21,7 +29,7 @@
 
     The decoder follows the LZX format and the FreeBASIC port is based on
     the LGPL-2.1-or-later libmspack implementation. See LICENSES/LGPL-2.1.txt.
-'/ 
+'/
 
 #ifndef __OMAGUI_CHM_LZX_BI__
 #define __OMAGUI_CHM_LZX_BI__

@@ -3,6 +3,14 @@
     File: listbox_selection.bi
     Purpose: Keep multiple row selection separate from keyboard focus.
     Responsibilities: Checked selection APIs and simple/extended gestures.
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the listbox_selection component in the omaGUI include graph.
+
     This file intentionally does NOT contain: rendering, scrolling or input polling.
     Private include in listbox.bas. All calls run on the GUI thread. Row flags
     are inline bounded storage, so selection adds no separately owned memory.

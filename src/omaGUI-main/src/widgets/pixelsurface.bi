@@ -15,6 +15,14 @@
         - preserve the client intersection when a surface is resized
         - expose checked pixel writes, clipped lines/rectangles/circles, reads, clears, and rendering
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the pixelsurface component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - widget construction or resize policy

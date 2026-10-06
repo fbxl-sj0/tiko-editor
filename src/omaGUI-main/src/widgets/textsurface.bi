@@ -11,6 +11,14 @@
         - declare surface allocation, access, and rendering routines
         - preserve cell ownership independently of widget captions and layout
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the textsurface component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - BASIC PRINT parsing or cursor policy

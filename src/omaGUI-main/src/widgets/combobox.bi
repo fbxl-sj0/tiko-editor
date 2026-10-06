@@ -18,6 +18,14 @@
         - retain optional normal client and text colors
         - keep application item values attached to rows during mutations
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the combobox component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - editable text autocomplete

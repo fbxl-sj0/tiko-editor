@@ -14,6 +14,14 @@
         - expose checked enabled-state and metadata access
         - dispatch one shared callback after release-inside activation
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the toolbar component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - application command policy

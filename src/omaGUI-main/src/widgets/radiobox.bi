@@ -16,6 +16,14 @@
         - expose pointer and keyboard selection behavior
         - expose radio-button creation and widget lifecycle entry points
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the radiobox component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - group traversal implementation

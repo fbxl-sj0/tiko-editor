@@ -4,6 +4,14 @@
     Purpose: Check editor callbacks and UTF-8 cursor operations.
     Responsibilities: Exercise typed hooks, whole-character navigation,
         deletion, and malformed-byte progress in drawable headless mode.
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain: platform text-input policy.
 '/
 

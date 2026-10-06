@@ -17,6 +17,20 @@
         - write a FreeBASIC include file containing the glyph bitmaps
         - optionally write a BMP atlas for visual inspection
 
+    Ownership:
+
+        SDL fonts, surfaces, and open file handles belong to this utility and
+        are released on its success and error paths. Generated output files
+        remain on disk for the caller.
+
+    Targets:
+
+        FreeBASIC host with SDL2 and SDL_ttf development headers and libraries.
+
+    Module API:
+
+        Standalone font-data generator; this file exposes no library API.
+
     This file intentionally does NOT contain:
 
         - runtime text drawing logic

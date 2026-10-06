@@ -7,6 +7,14 @@
         - report capacity while retaining the old list and selection
         - accept exactly 1024 entries after the overflow fixture is reduced
         - remove only the fixture files and directory created by this test
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
         - recursive deletion, existing-file overwrites, or SDK calls
 '/

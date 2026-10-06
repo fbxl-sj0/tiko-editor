@@ -15,6 +15,14 @@
         - create reusable one-, two-, or three-choice modal windows
         - expose caller-selected result values to the owning application
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the confirmdialog component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - application-specific confirmation policy

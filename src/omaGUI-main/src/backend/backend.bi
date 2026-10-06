@@ -15,6 +15,14 @@
         - load complete Unicode glyph packs for UTF-8 text
         - expose bitmap italic rendering without changing glyph advance
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the backend component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
         - widget-specific behavior
         - input polling

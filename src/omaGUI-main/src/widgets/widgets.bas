@@ -25,6 +25,14 @@
         - cancel private input state when controls become ineligible
         - tolerate callbacks which remove or replace their own widget tree
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
         - individual widget behavior or appearance
         - platform window creation and event handling

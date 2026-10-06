@@ -16,6 +16,14 @@
         - expose independent classic menu, border, command, and scrollbar colors
         - expose semantic color lookup for standard widgets
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the theme component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - widget rendering

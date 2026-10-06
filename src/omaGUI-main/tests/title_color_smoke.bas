@@ -4,6 +4,14 @@
     Purpose: Verify classic palettes and native byte runs with framebuffer pixels.
     Responsibilities: Check ownership, clipping, semantic widget colors,
         theme isolation, restoration, and minimized-window titles.
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain: VBDOS property conversion or input.
 '/
 #lang "fb"

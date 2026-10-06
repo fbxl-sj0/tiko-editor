@@ -7,6 +7,14 @@
         - construct the replacement before changing document or history state
         - keep caret and selection endpoints attached to their original text
         - expose opt-in keyboard policy without changing ordinary text controls
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
         - input polling, rendering, application menus, or language-specific parsing
 '/

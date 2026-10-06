@@ -16,6 +16,20 @@
           compressed member
         - keep no more than one decompressed reset interval cached
 
+    Ownership:
+
+        The caller owns an archive returned by chmarchive_Open and releases it
+        with chmarchive_Close. Failed opens close the file and delete partial
+        archive state.
+
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
 
         - HTML parsing or viewer state
@@ -24,7 +38,7 @@
 
     The CHM/LZX handling follows the LGPL-2.1-or-later libmspack format
     implementation. See LICENSES/LGPL-2.1.txt.
-'/ 
+'/
 
 #include once "src/archive/chmarchive.bi"
 

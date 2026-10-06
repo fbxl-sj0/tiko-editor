@@ -6,6 +6,14 @@
         - preserve selection identity across insertion and removal
         - reject invalid indices and item/text capacity without partial writes
         - cancel a pending pointer row when list content moves
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
         - filesystem access or application-specific list behavior
 '/

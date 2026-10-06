@@ -6,6 +6,14 @@
         - validate range bounds, insertion, undo and reverse selections
         - check selection visibility without losing retained editor state
         - preserve pointer/explicit focus when Tab traversal is disabled
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
         - VB-specific policies, host clipboard access, or platform controls
 '/

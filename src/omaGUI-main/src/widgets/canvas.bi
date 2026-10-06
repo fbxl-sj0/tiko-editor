@@ -15,6 +15,14 @@
         - participate in ordinary widget layout, visibility, and input routing
         - optionally count complete primary-pointer clicks for host event loops
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the canvas component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - application drawing policy

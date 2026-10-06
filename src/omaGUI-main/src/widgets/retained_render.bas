@@ -4,6 +4,14 @@
     Purpose: Keep unchanged scene pixels and collect bounded repaint regions.
     Responsibilities: Observe GUI-thread visual keys, retain old widget bounds,
         merge overlapping damage and recover from layout or registry changes.
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain: input dispatch, widget drawing or page switching.
 '/
 

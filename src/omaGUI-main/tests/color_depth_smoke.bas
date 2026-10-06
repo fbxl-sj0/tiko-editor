@@ -15,6 +15,14 @@
         - verify 1-bit output and palette entries are black and white
         - verify a mode change preserves backend resize state
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - visual screenshot comparison

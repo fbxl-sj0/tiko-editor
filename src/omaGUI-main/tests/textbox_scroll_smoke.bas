@@ -16,6 +16,14 @@
         - prove wheel scrolling remains in place while the cursor is idle
         - prove the integrated scrollbar can change the multiline viewport
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - native mouse-wheel polling

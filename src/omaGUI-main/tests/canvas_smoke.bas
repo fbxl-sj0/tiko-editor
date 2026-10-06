@@ -15,6 +15,14 @@
         - retain current and previous pointer button state
         - preserve caller-owned callback context
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - screenshot comparisons

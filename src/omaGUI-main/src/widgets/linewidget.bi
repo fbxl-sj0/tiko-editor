@@ -13,6 +13,14 @@
         - retain the line color
         - represent endpoints through the base widget rectangle
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the linewidget component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - line rasterization

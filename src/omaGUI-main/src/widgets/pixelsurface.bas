@@ -17,6 +17,14 @@
         - clip ordinary and 16-bit patterned line and rectangle rasterization
         - redraw contiguous same-color runs through the portable backend
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
 
         - widget ownership, input handling, or automatic layout decisions

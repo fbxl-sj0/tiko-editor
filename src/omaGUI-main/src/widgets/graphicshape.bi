@@ -17,6 +17,14 @@
         - expose a styled creation API for imported HMI graphics
         - expose opt-in input state for imported operator controls
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the graphicshape component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - galaxy file parsing

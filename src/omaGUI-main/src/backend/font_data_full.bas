@@ -9,6 +9,14 @@
         - select the default or redistributable font tables at compile time
         - initialize the glyph pointers once for the backend
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
         - text layout or rasterization
         - runtime font-pack loading

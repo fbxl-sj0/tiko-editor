@@ -19,6 +19,14 @@
         - route noninteractive access keys to safe focus targets
         - let container widgets suspend descendant input without hiding chrome
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the widgets component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - individual widget implementation logic

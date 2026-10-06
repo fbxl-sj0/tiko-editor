@@ -22,6 +22,14 @@
         belong to this module and are released by backend_Exit. Image buffers
         returned to callers belong to those callers.
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
         - widget layout or input dispatch
         - application-specific rendering
@@ -33,6 +41,7 @@
 #include once "src/backend/input.bi"
 #include once "src/backend/font_data.bi"
 #include once "src/backend/theme.bi"
+#include once "crt/string.bi"
 #If Defined(__FB_WIN32__) AndAlso Not Defined(OMAGUI_PORTABLE_ONLY)
 #include once "windows.bi"
 #EndIf
@@ -505,6 +514,8 @@ End Function
 ' Lifecycle
 ' -------------------------------------------------------------------------
 
+#include once "src/backend/backend_font_span.bas"
+
 Sub backend_Init( _
     ByVal w As Integer, _
     ByVal h As Integer, _
@@ -562,6 +573,7 @@ Sub backend_Init( _
 End Sub
 
 Sub backend_Exit()
+    backend_FontSpanRelease
     If backend_HeadlessActive <> BACKEND_HEADLESS Then Screen 0
 #If Defined(__FB_WIN32__) And Not Defined(__FB_GFXLIB3__) And _
     Not Defined(OMAGUI_PORTABLE_ONLY)
@@ -865,8 +877,7 @@ End Sub
 Sub backend_ClearFontPacks()
     backend_FontGeneration += 1
 
-    For fontIndex As Integer = LBound(backend_FontPacks) To _
-                                UBound(backend_FontPacks)
+    For fontIndex As Integer = 0 To BACKEND_FONT_TERMINAL
         If backend_FontPacks(fontIndex).glyphs <> 0 Then _
             Deallocate backend_FontPacks(fontIndex).glyphs
         If backend_FontPacks(fontIndex).bitmap_storage <> 0 Then _
@@ -975,7 +986,10 @@ Function backend_LoadFontPack( _
     fileSize = CUInt(fileLength)
 
     fontFileData = Space(CInt(fileSize))
-    Get #fileNumber, , fontFileData
+    If Get(fileNumber, , fontFileData) <> 0 Then
+        Close #fileNumber
+        Return 0
+    End If
     Close #fileNumber
     fontBytes = Cast(UByte Ptr, StrPtr(fontFileData))
     If fontBytes = 0 OrElse Left(fontFileData, 4) <> "OGF1" Then Return 0
@@ -1071,14 +1085,13 @@ Function backend_LoadFontPack( _
 
         /'
             Spaces and other advance-only glyphs have no bitmap pixels.
-            Subtracting one from an unsigned zero would turn this copy into
-            an unbounded read and write instead of an empty loop.
+            Both spans were bounded by the validation pass. memcpy avoids
+            per-pixel 64-bit indexing on 32-bit targets; source and destination
+            belong to distinct allocations. Keep empty glyphs out of the copy.
         '/
         If pixelCount > 0 Then
-            For pixelIndex As ULongInt = 0 To pixelCount - 1
-                newBitmapStorage[bitmapStoragePosition + pixelIndex] = _
-                    fontBytes[bytePosition + pixelIndex]
-            Next pixelIndex
+            memcpy(@newBitmapStorage[bitmapStoragePosition], _
+                @fontBytes[bytePosition], CUInt(pixelCount))
         End If
         bitmapStoragePosition += pixelCount
         bytePosition += pixelCount
@@ -2371,6 +2384,18 @@ Private Sub DrawCharFont(ByVal x As Integer, ByVal y As Integer, _
     If text_alpha <= 0 Then Exit Sub
     If text_alpha > 255 Then text_alpha = 255
 
+    If backend_FontSpanBegin(w, h) <> 0 Then
+        For py As Integer = 0 To h - 1
+            For px As Integer = 0 To w - 1
+                Dim As ULong coverage = p[2 + py * w + px]
+                If text_alpha <> 255 Then coverage = (coverage * text_alpha) \ 255
+                backend_FontSpanPixels[py * backend_FontSpanPitch + px] = coverage Shl 24
+            Next px
+        Next py
+        backend_FontSpanEnd x + bearing_x, y + bearing_y, w, h, clr
+        Exit Sub
+    End If
+
     For py As Integer = 0 To h - 1
         For px As Integer = 0 To w - 1
             Dim As Integer alpha = (CInt(p[2 + py * w + px]) * text_alpha) \ 255
@@ -2578,6 +2603,22 @@ Private Sub backend_PrintPercentStyled( _
 
         glyph_width = glyph[0]
         glyph_height = glyph[1]
+        ' Normal-sized upright text needs no resampling. The span check keeps
+        ' indexed-color and GPU pages on their established raster paths.
+        If percent = 100 AndAlso italic = 0 AndAlso _
+           backend_FontSpanBegin(glyph_width, glyph_height) <> 0 Then
+            glyph_draw_x = backend_ZeroAdvanceGlyphPenX( _
+                current_x, previous_cell_x, previous_cell_advance, _
+                glyph_advance, glyph_width, bearing_x, 100, 100 _
+            )
+            DrawCharFont glyph_draw_x, y, character_code, clr, font_id, 255
+            If glyph_advance > 0 Then
+                previous_cell_x = current_x
+                previous_cell_advance = glyph_advance
+            End If
+            current_x += glyph_advance
+            Continue While
+        End If
         scaled_width = (glyph_width * percent + 50) \ 100
         scaled_height = (glyph_height * percent + 50) \ 100
         If scaled_width < 1 Then scaled_width = 1
@@ -2597,6 +2638,7 @@ Private Sub backend_PrintPercentStyled( _
             current_x, previous_cell_x, previous_cell_advance, _
             glyph_advance, glyph_width, bearing_x, percent, 100 _
         )
+        Dim As Integer useFontSpan = backend_FontSpanBegin(scaled_width, scaled_height)
         For dest_y As Integer = 0 To scaled_height - 1
             source_y = (dest_y * 100) \ percent
             row_shift_hundredths = 0
@@ -2623,7 +2665,13 @@ Private Sub backend_PrintPercentStyled( _
                     source_x_hundredths = _
                         (dest_x * 100 - row_shift_hundredths) * _
                         glyph_width * 100
-                    If source_x_hundredths < 0 Then Continue For
+                    If source_x_hundredths < 0 Then
+                        ' Shear leaves empty leading pixels. Clear their coverage
+                        ' because the reusable mask may still contain a prior glyph.
+                        If useFontSpan <> 0 Then _
+                            backend_FontSpanPixels[dest_y * backend_FontSpanPitch + dest_x] = 0
+                        Continue For
+                    End If
                     source_x_hundredths = _
                         source_x_hundredths \ row_content_width_hundredths
                     If source_x_hundredths > (glyph_width - 1) * 100 Then _
@@ -2643,13 +2691,20 @@ Private Sub backend_PrintPercentStyled( _
                 If row_shift_hundredths = 0 Then _
                     glyph_alpha = _
                         glyph[2 + source_y * glyph_width + source_x]
-                backend_PSetAlpha( _
-                    glyph_draw_x + ((bearing_x * percent) \ 100) + dest_x, _
-                    glyph_draw_y + dest_y, clr, _
-                    glyph_alpha _
-                )
+                If useFontSpan <> 0 Then
+                    backend_FontSpanPixels[dest_y * backend_FontSpanPitch + dest_x] = CULng(glyph_alpha) Shl 24
+                Else
+                    backend_PSetAlpha( _
+                        glyph_draw_x + ((bearing_x * percent) \ 100) + dest_x, _
+                        glyph_draw_y + dest_y, clr, _
+                        glyph_alpha _
+                    )
+                End If
             Next dest_x
         Next dest_y
+        If useFontSpan <> 0 Then backend_FontSpanEnd _
+            glyph_draw_x + ((bearing_x * percent) \ 100), glyph_draw_y, _
+            scaled_width, scaled_height, clr
         If glyph_advance > 0 Then
             previous_cell_x = current_x
             previous_cell_advance = glyph_advance

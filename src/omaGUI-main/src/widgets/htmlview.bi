@@ -17,6 +17,14 @@
         - expose link activation through polling or an optional callback
         - expose an optional application image provider with clear ownership
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the htmlview component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - networking, URL fetching, or shell launching
@@ -213,7 +221,7 @@ Declare Sub htmlview_SetImageHandler( _
     stylesheets or other small text resources from an application-owned
     namespace such as "chm://style.css". Returning zero allows ordinary
     local-file loading only when the resolved path is not a URI scheme.
-'/ 
+'/
 Declare Sub htmlview_SetResourceHandler( _
     ByVal htmlWidget As Widget Ptr, _
     ByVal handler As Any Ptr, _

@@ -19,6 +19,14 @@
         - preserve selection through Undo
         - keep long-line cursors horizontally visible and clipped
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - JRPG script compilation

@@ -3,6 +3,14 @@
     File: menubar_headings.bi
     Purpose: Maintain mutable heading state for the native menu bar.
     Responsibilities: compact visible headings and gate navigation/activation.
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the menubar_headings component in the omaGUI include graph.
+
     This file intentionally does NOT contain: platform menu calls.
     The GUI thread owns all state. Metadata changes cancel any pending press
     before moving headings, so release cannot activate a different command.

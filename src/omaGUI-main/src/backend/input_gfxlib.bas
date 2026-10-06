@@ -14,6 +14,14 @@
         - expose per-widget pointer and keyboard dispatch masks
         - provide deterministic input values for GUI tests
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
         - widget-specific input behavior
         - graphics rendering

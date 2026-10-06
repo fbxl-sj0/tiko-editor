@@ -15,6 +15,14 @@
         - prove normal and scaled embedded text reaches the alpha renderer
         - prove fully transparent pixels preserve the destination
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - indexed-color alpha expectations

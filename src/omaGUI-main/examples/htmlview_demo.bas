@@ -15,6 +15,14 @@
         - show application-controlled link handling
         - use only omaGUI and standard FreeBASIC facilities
 
+    Targets:
+
+        FreeBASIC gfxlib build with a display driver.
+
+    Module API:
+
+        Standalone omaGUI example entry point; this file exposes no library API.
+
     This file intentionally does NOT contain:
 
         - a network client or external browser launcher

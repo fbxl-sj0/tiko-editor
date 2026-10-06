@@ -17,6 +17,14 @@
         - provide portable case-insensitive wildcard filters
         - allow a bounded application-supplied window title
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the filedialog component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - directory enumeration implementation

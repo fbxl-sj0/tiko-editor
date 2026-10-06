@@ -8,6 +8,14 @@
         - check opt-in defaults, failed API calls, and preserved editor state
         - exercise clipboard commands through the process-local backend
         - compare masked drawing and pointer placement with literal glyphs
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
         - host clipboard access, operating-system controls, or VB5 runtime code
 '/

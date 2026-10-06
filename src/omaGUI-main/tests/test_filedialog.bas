@@ -16,6 +16,14 @@
         - exercise cancel, open, and save results through button input
         - verify removing a completed dialog clears modal state
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - platform-native file dialogs

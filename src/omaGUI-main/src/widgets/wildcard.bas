@@ -14,6 +14,14 @@
         - apply Windows-style case-insensitive comparisons on every target
         - preserve the common DOS meaning of '*.*' as every filename
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
 
         - filesystem enumeration or path validation

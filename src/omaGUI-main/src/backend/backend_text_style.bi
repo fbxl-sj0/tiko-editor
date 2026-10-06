@@ -6,6 +6,14 @@
         - synthesize bold and italic without platform font dependencies
         - draw underline and strikeout within the existing line height
         - preserve advance widths, clipping, and the ordinary rendering path
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the backend_text_style component in the omaGUI include graph.
+
     This file intentionally does NOT contain: widget state or text layout.
     Private implementation include for backend_gfxlib.bas. Drawing stays on the
     GUI thread and borrows immutable glyph tables from backend_FontGlyph.

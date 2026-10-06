@@ -12,6 +12,14 @@
          Repeat held arrow/page steps with bounded GUI-thread timing
          Validate imported range, value, and increment properties
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
          List selection behavior
          Global pointer dispatch policy
@@ -24,8 +32,8 @@
 Const SCROLLBAR_MINIMUM_THUMB_SIZE As Integer = 12
 Const SCROLLBAR_MINIMUM_WHEEL_STEP As Integer = 1
 Const SCROLLBAR_ARROW_MAXIMUM As Integer = 4 ' Keep triangles legible on narrow bars.
-Const SCROLLBAR_VALUE_MINIMUM As LongInt = -2147483648ll
-Const SCROLLBAR_VALUE_MAXIMUM As LongInt = 2147483647ll
+Const SCROLLBAR_VALUE_MINIMUM As LongInt = -2147483648LL
+Const SCROLLBAR_VALUE_MAXIMUM As LongInt = 2147483647LL
 ' UI pacing, not DOS timer ticks: pause after the press, then repeat steadily.
 Const SCROLLBAR_REPEAT_DELAY_MS As Long = 400
 Const SCROLLBAR_REPEAT_INTERVAL_MS As Long = 50

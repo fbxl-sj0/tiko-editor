@@ -14,6 +14,14 @@
         - verify maximize and restore reflow anchored window children
         - exercise page flipping after framebuffer dimensions change
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
         - JRPG editor-specific layout rules
         - interactive input or visual approval

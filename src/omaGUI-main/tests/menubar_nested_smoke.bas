@@ -12,6 +12,14 @@
         - test keyboard navigation, accelerators, and pointer dismissal
         - verify popup ownership, state changes, and cleanup
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
         - application command policy
         - native operating-system menu calls

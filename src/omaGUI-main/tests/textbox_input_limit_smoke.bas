@@ -3,6 +3,14 @@
     File: textbox_input_limit_smoke.bas
     Purpose: Verify opt-in byte limits without changing ordinary editor behavior.
     Responsibilities: test typing, selection, paste, history and atomic commands.
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain: VB policies, host clipboard access or platform APIs.
 '/
 #lang "fb"

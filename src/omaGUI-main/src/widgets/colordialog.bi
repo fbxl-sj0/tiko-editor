@@ -14,6 +14,14 @@
         - expose accept, cancel, and selected-index state
         - provide the canonical classic palette index to RGB mapping
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the colordialog component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - application-specific theme mutation

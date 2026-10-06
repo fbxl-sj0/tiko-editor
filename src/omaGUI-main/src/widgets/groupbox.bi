@@ -15,6 +15,14 @@
         - expose construction and checked caption replacement
         - provide a stable visual container rectangle for child controls
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the groupbox component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - child registration or layout policy

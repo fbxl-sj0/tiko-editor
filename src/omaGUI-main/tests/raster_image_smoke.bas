@@ -15,6 +15,14 @@
         - reject truncated input without leaking a gfxlib image
         - optionally probe caller-supplied corpus image paths
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - network image retrieval
@@ -171,6 +179,7 @@ Dim As UByte jpegBytes()
 Dim As UByte pngBytes()
 Dim As UByte bmpBytes()
 Dim As UByte badBytes(0 To 2) = {&h47, &h49, &h46}
+Dim As UByte emptyBytes()
 Dim As RasterImage Ptr loadedImage
 Dim As String errorMessage
 Dim As Long jpegByteCount
@@ -277,6 +286,10 @@ If loadedImage <> 0 Then
 End If
 
 test_Section "invalid input"
+AssertTrue rasterimage_DetectFormat( _
+    emptyBytes(), 1 _
+) = RASTERIMAGE_FORMAT_UNKNOWN, _
+    "unallocated byte arrays are rejected before format detection"
 AssertTrue rasterimage_LoadMemory( _
     badBytes(), 3, loadedImage, errorMessage _
 ) = 0 AndAlso loadedImage = 0 AndAlso Len(errorMessage) > 0, _

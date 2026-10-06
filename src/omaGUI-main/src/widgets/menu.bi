@@ -18,6 +18,14 @@
         - retain shared insets for drawing, placement, and pointer rows
         - expose item reset for reusable generated popups
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the menu component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - application command policy

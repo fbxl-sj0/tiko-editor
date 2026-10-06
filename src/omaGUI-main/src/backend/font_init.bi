@@ -12,6 +12,14 @@
 
         - associate printable ASCII codes with their static glyph blocks
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the font_init component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - glyph bitmap data

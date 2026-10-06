@@ -16,6 +16,14 @@
         - expose pointer and keyboard toggle behavior
         - expose checkbox creation and widget lifecycle entry points
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the checkbox component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - rendering or pointer-update implementation

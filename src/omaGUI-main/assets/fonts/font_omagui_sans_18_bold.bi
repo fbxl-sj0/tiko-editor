@@ -17,6 +17,14 @@
 
         Liberation Sans Bold (SIL Open Font License 1.1), point size 18
 
+    Targets:
+
+        FreeBASIC include data; glyph tables require no operating-system font API at runtime.
+
+    Module API:
+
+        Defines font_omagui_sans_18_bold_chars and font_omagui_sans_18_bold_init_pointers for the font subsystem.
+
     This file intentionally does NOT contain:
 
         - runtime font selection

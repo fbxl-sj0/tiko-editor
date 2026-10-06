@@ -18,6 +18,14 @@
         - expose flat, single-line, and sunken border styles
         - provide a clipped client area for child widgets
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the picturebox component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - bitmap decoding or drawing algorithms

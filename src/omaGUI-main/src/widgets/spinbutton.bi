@@ -15,6 +15,14 @@
         - invoke an optional change callback after user activation
         - opt into directional step notifications and held-input repetition
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the spinbutton component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - spin-button rendering implementation

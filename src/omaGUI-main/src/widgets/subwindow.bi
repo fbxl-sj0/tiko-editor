@@ -18,6 +18,14 @@
         - retain normal geometry across minimized and maximized states
         - expose portable control-box, minimize, and maximize title controls
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the subwindow component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
         - window ordering policy
         - child rendering or input clipping policy

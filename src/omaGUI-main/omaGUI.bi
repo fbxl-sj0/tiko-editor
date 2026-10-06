@@ -15,6 +15,14 @@
         - prevent duplicate declarations through a single include guard
         - assemble implementation units when OMAGUI_IMPLEMENTATION is defined
 
+    Targets:
+
+        FreeBASIC with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Public omaGUI declarations; OMAGUI_IMPLEMENTATION selects the single implementation assembly.
+
     This file intentionally does NOT contain:
 
         - application-specific GUI layout

@@ -20,6 +20,14 @@
         - distinguish invalid input from bounded-list capacity failures
         - combine optional pattern alternatives in one directory scan
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
 
         - current-directory mutation

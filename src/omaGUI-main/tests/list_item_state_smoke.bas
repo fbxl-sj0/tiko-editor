@@ -4,6 +4,14 @@
     Purpose: Verify row identity, replacement and checked scroll operations.
     Responsibilities: test both list providers through their public APIs,
         including portable 64-bit values, aliasing and failed mutations.
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain: VB runtime or operating-system APIs.
 '/
 #lang "fb"
@@ -33,8 +41,8 @@ Private Sub Require(ByVal accepted As Integer, ByVal source_line As Integer)
     End 1
 End Sub
 
-Const LOW_TAG As LongInt = -9223372036854775807ll - 1
-Const HIGH_TAG As LongInt = 9223372036854775807ll
+Const LOW_TAG As LongInt = -9223372036854775807LL - 1
+Const HIGH_TAG As LongInt = 9223372036854775807LL
 backend_Init 320, 240, -1
 gui_Init()
 For provider As Integer = 0 To 1

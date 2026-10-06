@@ -21,6 +21,14 @@
         - own a copied raster image beneath retained drawings and text
         - forward clipped 16-bit patterned line requests to the pixel surface
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
 
         - image file loading or raster drawing algorithms

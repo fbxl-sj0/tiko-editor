@@ -3,6 +3,14 @@
     File: font_pack_smoke.bas
     Purpose: Verify editor font packs and UTF-8 text in the combined backend.
     Responsibilities: Check new font slots, loading, fallback, and legacy slots.
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain: widget or application behavior.
 '/
 #lang "fb"

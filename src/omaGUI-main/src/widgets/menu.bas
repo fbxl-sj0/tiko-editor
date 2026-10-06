@@ -18,6 +18,14 @@
         - place, scroll, and navigate complete trees inside the viewport
         - restore focus when a tree is dismissed
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
 
         - application command policy

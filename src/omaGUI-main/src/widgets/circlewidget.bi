@@ -13,6 +13,14 @@
         - retain radius, color, and fill state
         - expose circle creation and rendering lifecycle entry points
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the circlewidget component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - circle rasterization

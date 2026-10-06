@@ -15,6 +15,14 @@
         - report accept and cancel without applying application policy
         - release dialog metadata through the normal widget lifecycle
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
 
         - input meaning or validation

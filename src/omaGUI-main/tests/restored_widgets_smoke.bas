@@ -15,6 +15,14 @@
         - exercise advanced graphic style and path setters
         - exercise the restored alpha, font, and alignment backend API
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - visual screenshot comparisons

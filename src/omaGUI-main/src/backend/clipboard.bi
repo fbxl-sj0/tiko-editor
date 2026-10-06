@@ -13,6 +13,14 @@
         - expose clipboard text reads and writes
         - define the maximum accepted clipboard payload
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the clipboard component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - platform backend implementation

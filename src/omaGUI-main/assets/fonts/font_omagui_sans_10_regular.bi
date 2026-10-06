@@ -17,6 +17,14 @@
 
         Liberation Sans Regular (SIL Open Font License 1.1), point size 10
 
+    Targets:
+
+        FreeBASIC include data; glyph tables require no operating-system font API at runtime.
+
+    Module API:
+
+        Defines font_omagui_sans_10_regular_chars and font_omagui_sans_10_regular_init_pointers for the font subsystem.
+
     This file intentionally does NOT contain:
 
         - runtime font selection

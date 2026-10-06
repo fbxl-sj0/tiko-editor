@@ -16,6 +16,14 @@
         - support pointer, keyboard, separator, and callback behavior
         - expose mutable labels, visibility, checked, enabled, and shortcuts
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the menubar component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - application command policy

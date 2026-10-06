@@ -3,6 +3,14 @@
     File: htmlview_resource_smoke.bas
     Purpose: Check application-owned linked stylesheets and anchors.
     Responsibilities: Resolve one virtual stylesheet during staged layout.
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain: networking or disk resources.
 '/
 

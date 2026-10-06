@@ -15,6 +15,14 @@
         - verify one callback on a matching release
         - verify outside release cancels and dismisses the popup
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - gfxlib screen creation

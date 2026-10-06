@@ -6,6 +6,14 @@
         - preserve exact values when pressing a quantized thumb
         - drag beyond the track, restore the grab position, and page on press
         - check optional arrows, reversed direction, and signed 32-bit bounds
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
         - VBDOS event dispatch or application-specific scrolling
 '/
@@ -88,7 +96,7 @@ input_MockKeyPress KEY_END
 gui_UpdateAll
 scroll_Require scrollbar_GetValue(scroll_widget) = 0, __LINE__
 scroll_Require scrollbar_SetReverse(scroll_widget, 0), __LINE__
-scroll_Require scrollbar_SetRange(scroll_widget, -2147483648ll, 2147483647ll), __LINE__
+scroll_Require scrollbar_SetRange(scroll_widget, -2147483648LL, 2147483647LL), __LINE__
 scroll_Require scrollbar_SetChanges(scroll_widget, 2147483647, 2147483647), __LINE__
 scrollbar_Render scroll_widget
 input_MockKeyPress KEY_RIGHT
@@ -99,7 +107,7 @@ gui_UpdateAll
 scroll_Require scrollbar_GetValue(scroll_widget) = 2147483647, __LINE__
 input_MockMouse 15, 15, 0, 2147483647
 gui_UpdateAll
-scroll_Require scrollbar_GetValue(scroll_widget) = -2147483648ll, __LINE__
+scroll_Require scrollbar_GetValue(scroll_widget) = -2147483648LL, __LINE__
 input_MockMouse 15, 15, 0, -2147483647
 gui_UpdateAll
 scroll_Require scrollbar_GetValue(scroll_widget) = 2147483647, __LINE__

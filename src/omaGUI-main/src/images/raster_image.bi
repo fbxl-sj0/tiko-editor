@@ -14,6 +14,14 @@
         - retain decoded gfxlib image buffers and their dimensions
         - expose one matching destruction routine
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the raster_image component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - HTML layout or widget behavior

@@ -14,6 +14,14 @@
         - label test sections
         - return a failing process status when assertions fail
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Shared declarations used by standalone omaGUI smoke tests.
+
     This file intentionally does NOT contain:
 
         - production widget behavior

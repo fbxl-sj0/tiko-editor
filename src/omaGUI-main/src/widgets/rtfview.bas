@@ -15,12 +15,20 @@
         - wrap document runs into lines using embedded omaGUI fonts
         - provide scrolling, clipping, rendering, and widget lifecycle
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
 
         - document file access or navigation
         - rich text editing or hyperlink activation
         - platform-native rich text controls
-'/ 
+'/
 
 #lang "fb"
 #include once "src/widgets/rtfview.bi"
@@ -938,6 +946,7 @@ Private Function rtfview_ParsePlainText( _
             If rtfview_AppendTab(d, parserState) = 0 Then Return 0
         Case 0
             ' File readers may retain the conventional trailing NUL byte.
+            Continue While
         Case Else
             If rtfview_AppendCodePoint(d, parserState, characterCode) = 0 _
                 Then Return 0

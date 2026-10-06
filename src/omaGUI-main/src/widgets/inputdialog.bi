@@ -14,6 +14,14 @@
         - optionally expose two checkbox choices
         - return accepted text, option, or cancellation state
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the inputdialog component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - application validation or side effects

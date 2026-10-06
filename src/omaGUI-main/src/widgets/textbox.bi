@@ -28,6 +28,14 @@
         - retain optional syntax-highlighting mode and semantic color metadata
           for keywords, types, objects, members, procedures, and literals
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the textbox component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - clipboard implementation
@@ -80,6 +88,13 @@ Type TextBoxRenderStateHandler As Function( _
     ByVal w As Widget Ptr, ByVal sourcePosition As Integer, _
     ByRef colorState As Integer, ByRef styleState As Integer _
 ) As Integer
+/'
+    Optional exact observation of application-owned line visibility. Equal
+    keys must mean equal visible rows for the same source. Called on the GUI
+    thread, without retaining a reference to the returned string. Without a
+    provider, visibility callbacks retain their conservative layout behavior.
+'/
+Type TextBoxMetricsStateHandler As Function(ByVal w As Widget Ptr) As String
 Const TEXTBOX_INDICATOR_STYLE_BOX As Integer = 0
 Const TEXTBOX_INDICATOR_STYLE_FILL As Integer = 1
 Type TextBoxTextIndicatorHandler As Function( _
@@ -288,6 +303,7 @@ Type TextBoxData
     ' A visibility callback may depend on external state. Caching that layout
     ' is opt-in; its owner sets viewport_dirty whenever that state changes.
     As Integer metrics_cache_callbacks
+    As TextBoxMetricsStateHandler metrics_state_handler
     As Integer metrics_gutter_width, metrics_total_lines
     As Integer metrics_vertical_visible, metrics_horizontal_visible
     As Integer rendered_caret_x, rendered_caret_y
@@ -305,6 +321,12 @@ Declare Sub textbox_Render(ByVal w As Widget Ptr)
 ' before assigning this observation to Widget.render_observation.
 Declare Function textbox_GetRenderObservation(ByVal w As Widget Ptr) As String
 Declare Function textbox_GetRenderDamage(ByVal w As Widget Ptr, _
+    ByRef previousKey As Const String, ByRef nextKey As Const String, _
+    ByRef x As Integer, ByRef y As Integer, _
+    ByRef widthValue As Integer, ByRef heightValue As Integer) As Integer
+
+' Opt-in row damage requires an observation of every callback-owned dependency.
+Declare Function textbox_GetCursorRowRenderDamage(ByVal w As Widget Ptr, _
     ByRef previousKey As Const String, ByRef nextKey As Const String, _
     ByRef x As Integer, ByRef y As Integer, _
     ByRef widthValue As Integer, ByRef heightValue As Integer) As Integer
@@ -534,6 +556,9 @@ Declare Sub textbox_SetTextColorHandler( _
 )
 Declare Sub textbox_SetRenderStateHandler( _
     ByVal w As Widget Ptr, ByVal stateHandler As TextBoxRenderStateHandler _
+)
+Declare Sub textbox_SetMetricsStateHandler( _
+    ByVal w As Widget Ptr, ByVal stateHandler As TextBoxMetricsStateHandler _
 )
 Declare Sub textbox_SetTextStyleHandler( _
     ByVal w As Widget Ptr, ByVal styleHandler As TextBoxTextStyleHandler _

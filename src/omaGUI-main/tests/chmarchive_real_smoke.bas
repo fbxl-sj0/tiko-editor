@@ -3,6 +3,14 @@
     File: chmarchive_real_smoke.bas
     Purpose: Read a member from a real CHM help archive.
     Responsibilities: Check directory parsing and bounded member decoding.
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain: HTML layout or extraction.
 '/
 

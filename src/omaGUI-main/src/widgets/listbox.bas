@@ -16,6 +16,14 @@
         - keep programmatic selections visible and range checked
         - render optional normal client and text colors
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
         - filesystem enumeration
         - application-specific list commands

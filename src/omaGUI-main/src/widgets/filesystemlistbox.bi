@@ -19,6 +19,14 @@
         - preserve the old list when a path, pattern, or capacity check fails
         - combine explicit semicolon-separated patterns without duplicate rows
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the filesystemlistbox component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - platform SDK declarations

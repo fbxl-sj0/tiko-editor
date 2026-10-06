@@ -14,6 +14,14 @@
         - expose the bundled heading font pointers
         - expose pointer initialization after glyph data is linked
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the font_data component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - generated glyph bytes

@@ -15,6 +15,14 @@
         - reject invalid indexes, widths, alignments, and oversized text
         - render a narrow layout without overflowing panel geometry
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - application-specific status messages

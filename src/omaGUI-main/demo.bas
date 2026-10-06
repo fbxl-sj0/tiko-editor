@@ -17,6 +17,14 @@
         - expose live 0-to-255 alpha compositing against a checkerboard
         - switch safely among true-color and indexed-color display modes
 
+    Targets:
+
+        FreeBASIC gfxlib build with a display driver.
+
+    Module API:
+
+        Standalone omaGUI example entry point; this file exposes no library API.
+
     This file intentionally does NOT contain:
 
         - application persistence
@@ -474,6 +482,7 @@ Private Sub demo_AddShapeGallery(ByVal parent As Widget Ptr)
             graphicshape_SetInteractive shapeWidget, -1, @demo_OnGraphicInput
         Case Else
             ' Pure drawing elements remain intentionally pointer-transparent.
+            Continue For
         End Select
     Next shapeKind
 

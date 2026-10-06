@@ -15,6 +15,14 @@
         - convert a completed pointer press or keyboard command into activation
         - invoke the optional application callback
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
 
         - global pointer routing

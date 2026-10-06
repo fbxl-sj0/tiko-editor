@@ -12,6 +12,14 @@
         - retain the checked state
         - honor optional per-widget background and foreground colors
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
         - application-specific boolean semantics
         - global focus and shortcut routing

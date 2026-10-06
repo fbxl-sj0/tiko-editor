@@ -15,6 +15,14 @@
         - verify textbox and list state transitions
         - report results through the common test harness
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - visual screenshot comparisons

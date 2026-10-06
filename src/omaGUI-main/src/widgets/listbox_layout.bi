@@ -3,6 +3,14 @@
     File: listbox_layout.bi
     Purpose: Share column geometry between rendering, scrolling and hit testing.
     Responsibilities: Bound row/column calculations and reveal the caret.
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the listbox_layout component in the omaGUI include graph.
+
     This file intentionally does NOT contain: input edges or selection state.
     Private GUI-thread include in listbox.bas. scroll_top remains a row index;
     in column mode it is aligned to the first row of the leftmost column.

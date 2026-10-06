@@ -15,6 +15,14 @@
         - read stored or LZX-compressed members on demand
         - cache at most one decompressed LZX reset interval
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the chmarchive component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - HTML parsing or widget rendering
@@ -23,7 +31,7 @@
 
     The archive and LZX implementation are based on the LGPL-2.1-or-later
     libmspack implementation. See LICENSES/LGPL-2.1.txt.
-'/ 
+'/
 
 #ifndef __OMAGUI_CHMARCHIVE_BI__
 #define __OMAGUI_CHMARCHIVE_BI__

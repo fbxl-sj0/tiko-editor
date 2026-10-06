@@ -15,6 +15,14 @@
         - retain an optional caller-supplied face color
         - expose pointer, keyboard, mnemonic, and polled activation
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the button component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - button rendering implementation

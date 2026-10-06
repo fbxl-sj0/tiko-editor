@@ -5,6 +5,14 @@
     Responsibilities:
         - validate the directory and first image's DIB, palette, and masks
         - convert opaque pixels and transparent AND-mask pixels to RGBA
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the raster_ico component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
         - cursor loading, PNG icons, or destination-dependent XOR drawing
 
@@ -39,7 +47,7 @@ Private Function rasterico_Decode( _
     If entryCount = 0 OrElse entryCount > (byteCount - 6) \ 16 Then Return 0
     ' Check every entry span even though only the first frame is decoded.
     For entryIndex As Long = 0 To entryCount - 1
-        Dim As LongInt entryOffset = 6 + CLngInt(entryIndex) * 16
+        Dim As LongInt entryOffset = 6LL + CLngInt(entryIndex) * 16LL
         Dim As ULong spanOffset, spanLength
         rasterimage_ReadU32LE bytes(), byteCount, entryOffset + 8, spanLength
         rasterimage_ReadU32LE bytes(), byteCount, entryOffset + 12, spanOffset
@@ -83,7 +91,8 @@ Private Function rasterico_Decode( _
     errorMessage = "ICO bitmap palette or masks are truncated"
     If andOffset + CLngInt(andStride) * imageHeight > CLngInt(imageOffset) + imageLength Then Return 0
     For colorIndex As Long = 0 To CLng(colorCount) - 1
-        Dim As LongInt offsetValue = paletteOffset + colorIndex * 4
+        Dim As LongInt offsetValue = _
+            paletteOffset + CLngInt(colorIndex) * 4LL
         paletteColors(colorIndex) = RGB(bytes(offsetValue + 2), bytes(offsetValue + 1), bytes(offsetValue))
     Next colorIndex
 
@@ -98,12 +107,15 @@ Private Function rasterico_Decode( _
         Return 0
     End If
     For rowIndex As Long = 0 To imageHeight - 1
-        Dim As LongInt xorRow = xorOffset + CLngInt(imageHeight - 1 - rowIndex) * xorStride
-        Dim As LongInt andRow = andOffset + CLngInt(imageHeight - 1 - rowIndex) * andStride
+        Dim As LongInt xorRow = xorOffset + _
+            CLngInt(imageHeight - 1 - rowIndex) * CLngInt(xorStride)
+        Dim As LongInt andRow = andOffset + _
+            CLngInt(imageHeight - 1 - rowIndex) * CLngInt(andStride)
         For columnIndex As Long = 0 To imageWidth - 1
             Dim As ULong pixelColor
             If bitCount = 24 Then
-                Dim As LongInt offsetValue = xorRow + columnIndex * 3
+                Dim As LongInt offsetValue = _
+                    xorRow + CLngInt(columnIndex) * 3LL
                 pixelColor = RGB(bytes(offsetValue + 2), bytes(offsetValue + 1), bytes(offsetValue))
             Else
                 Dim As Long bitOffset = columnIndex * bitCount

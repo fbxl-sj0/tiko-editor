@@ -14,6 +14,14 @@
         - decode canonical Huffman trees and LZ matches
         - return only the requested reset interval in memory
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+
     This file intentionally does NOT contain:
 
         - CHM directory parsing or file extraction
@@ -23,7 +31,7 @@
     The implementation is a FreeBASIC port of the regular LZX decoding
     algorithm in libmspack, licensed under LGPL-2.1-or-later. See
     LICENSES/LGPL-2.1.txt.
-'/ 
+'/
 
 #include once "src/archive/chm_lzx.bi"
 
@@ -478,17 +486,17 @@ Private Function chmlzx_ReadBlockHeader( _
     decoder->blockRemaining = decoder->blockLength
 
     Select Case decoder->blockType
-    Case CHMLZX_BLOCK_ALIGNED
-        For symbolIndex As Integer = 0 To CHMLZX_ALIGNED_SYMBOLS - 1
-            If chmlzx_ReadBits(decoder, 3, bits) = 0 Then Return 0
-            decoder->alignedtree.codeLengths(symbolIndex) = CByte(bits)
-        Next symbolIndex
-        If chmlzx_BuildHuffman( _
-            decoder, @decoder->alignedtree, CHMLZX_ALIGNED_SYMBOLS, 0 _
-        ) = 0 Then Return 0
-        ' The aligned header continues with the same trees as a verbatim block.
-
-    Case CHMLZX_BLOCK_VERBATIM
+    Case CHMLZX_BLOCK_ALIGNED, CHMLZX_BLOCK_VERBATIM
+        If decoder->blockType = CHMLZX_BLOCK_ALIGNED Then
+            For symbolIndex As Integer = 0 To CHMLZX_ALIGNED_SYMBOLS - 1
+                If chmlzx_ReadBits(decoder, 3, bits) = 0 Then Return 0
+                decoder->alignedtree.codeLengths(symbolIndex) = CByte(bits)
+            Next symbolIndex
+            If chmlzx_BuildHuffman( _
+                decoder, @decoder->alignedtree, CHMLZX_ALIGNED_SYMBOLS, 0 _
+            ) = 0 Then Return 0
+            ' The aligned header continues with the same trees as verbatim.
+        End If
 
     Case CHMLZX_BLOCK_UNCOMPRESSED
         decoder->intelStarted = -1

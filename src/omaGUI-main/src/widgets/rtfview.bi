@@ -14,6 +14,14 @@
         - expose topic text loading and plain-text loading
         - expose rendering, scrolling, and lifecycle entry points
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the rtfview component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
 
         - file access or help-topic navigation

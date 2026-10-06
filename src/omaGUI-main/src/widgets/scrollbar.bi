@@ -13,6 +13,14 @@
         - expose checked property setters for imported form metadata
         - expose repeat timing and private pointer-state cancellation
 
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Declarations for the scrollbar component in the omaGUI include graph.
+
     This file intentionally does NOT contain:
         - list ownership
         - global wheel dispatch
