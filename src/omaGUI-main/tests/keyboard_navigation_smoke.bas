@@ -42,7 +42,7 @@
 Const KEYBOARD_NAVIGATION_SCREEN_WIDTH As Integer = 420
 Const KEYBOARD_NAVIGATION_SCREEN_HEIGHT As Integer = 300
 
-' Test callback state is shared with keyboardNavigation_OnActivate. FB-LINTER: DISABLE-NEXT-LINE FBL301
+' Test callback state is shared with keyboardNavigation_OnActivate.
 Dim Shared As Integer keyboardNavigationActivations
 Dim Shared As Integer keyboardNavigationDefaultActivations
 Dim Shared As Integer keyboardNavigationCancelActivations

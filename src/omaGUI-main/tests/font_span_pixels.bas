@@ -12,7 +12,10 @@
 
         Standalone regression executable; it exposes no library declarations.
 
-    This file does not dispatch input or load user content.
+    This file intentionally does NOT contain:
+
+        - application input dispatch
+        - user-content loading
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY
@@ -48,14 +51,30 @@ For fontIndex As Integer = 0 To 3
     backend_PrintFontPercent 18, y + 48, colors(fontIndex), sampleText, fontIds(fontIndex), 100
     backend_ResetClip
 Next fontIndex
+' Exercise mask eviction, color-independent reuse and font-generation reset.
+' These rows are also captured by the original per-pixel reference build.
+Dim As String evictionText
+For characterCode As Integer = 33 To 126
+    evictionText &= Chr(characterCode)
+Next characterCode
+backend_PrintFont 1, 426, RGB(201, 87, 41), evictionText, BACKEND_FONT_DEFAULT
+backend_PrintFont 1, 445, RGB(47, 203, 117), "AaWm 0123()", BACKEND_FONT_DEFAULT
+ScreenUnlock
+If backend_LoadFontPack(BACKEND_FONT_DEFAULT, "assets/fonts/noto_sans_ui.ogf") = 0 Then
+    backend_Exit
+    End 5
+End If
+ScreenLock
+backend_PrintFontAlpha 180, 445, RGB(133, 61, 211), "AaWm 0123()", BACKEND_FONT_DEFAULT, 119
 Dim As Any Ptr snapshot = ImageCreate(640, 480, 0, 32)
+If snapshot <> 0 Then
+    Get (0, 0)-(639, 479), snapshot
+End If
+ScreenUnlock 1, 0
 If snapshot = 0 Then
-    ScreenUnlock 1, 0
     backend_Exit
     End 3
 End If
-Get (0, 0)-(639, 479), snapshot
-ScreenUnlock 1, 0
 Dim As Integer widthValue, heightValue, bytesPerPixel, pitchBytes
 Dim As Any Ptr pixels
 If ImageInfo(snapshot, widthValue, heightValue, bytesPerPixel, pitchBytes, pixels) <> 0 OrElse _

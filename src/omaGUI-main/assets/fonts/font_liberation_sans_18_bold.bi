@@ -29,7 +29,7 @@
 #define __FONT_LIBERATION_SANS_18_BOLD_BI__
 
 ' Format: Width, Height, AlphaData...
-Dim Shared As UByte Ptr font_liberation_sans_18_bold_chars(32 To 126)
+Dim Shared As UByte Ptr font_liberation_sans_18_bold_chars(32 To 126) ' fblint: disable-line FBL301 -- the backend initializes this shared glyph table once, then reads it.
 
 ' Font data for character 32 (' ')
 Static Shared As UByte font_liberation_sans_18_bold_char_32_data(...) = { _

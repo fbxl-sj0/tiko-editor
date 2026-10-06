@@ -60,9 +60,9 @@ Const TEXTBOX_INTERACTION_EXIT_SCREEN As Integer = 7
 Const TEXTBOX_INTERACTION_SOURCE As String = _
     "alpha beta" & !"\n" & "second line" & !"\n" & "third"
 
-' Failure cleanup is shared with the assertions below. FB-LINTER: DISABLE-NEXT-LINE FBL301
+' Failure cleanup is shared with the assertions below.
 Dim Shared textboxInteractionSmoke_BackendActive As Integer
-Dim Shared textboxInteractionSmoke_OriginalClipboard As String ' Test-owned external state. FB-LINTER: DISABLE-LINE FBL301
+Dim Shared textboxInteractionSmoke_OriginalClipboard As String ' Test-owned external state.
 
 
 Sub textboxInteractionSmoke_Fail( _

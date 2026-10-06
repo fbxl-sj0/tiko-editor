@@ -38,7 +38,8 @@ Sub gui_InvalidateRect(ByVal x As Integer, ByVal y As Integer, _
     backend_GetSize screenWidth, screenHeight
     ' Imported line/shape widgets may use negative or zero extents. Match the
     ' ordinary scene renderer's normalized rectangle before clipping damage.
-    Dim As LongInt leftEdge = x, topEdge = y
+    Dim As LongInt leftEdge = x
+    Dim As LongInt topEdge = y
     Dim As LongInt rightEdge = CLngInt(x) + widthValue
     Dim As LongInt bottomEdge = CLngInt(y) + heightValue
     If rightEdge < leftEdge Then Swap rightEdge, leftEdge
@@ -209,8 +210,9 @@ Function gui_PrepareRetainedFrame() As Integer
                     w->retained_x, w->retained_y, w->retained_w, w->retained_h
                 If w->evis <> 0 Then gui_InvalidateRect w->ax, w->ay, w->w, w->h
             End If
+            ' The retained key already matches. Do not copy a large key every idle frame.
+            w->retained_key = key
         End If
-        w->retained_key = key
         w->retained_valid = -1
         w->retained_visible = w->evis
         w->retained_x = w->ax: w->retained_y = w->ay

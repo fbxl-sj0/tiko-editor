@@ -1,6 +1,6 @@
 /'
     Project: omaGUI gfxlib backend
-    File: backend_font_span.bas
+    File: backend_font_span.bi
     Purpose: Present glyph coverage with one gfxlib blit per glyph.
     Responsibilities: Own a bounded reusable mask image and preserve the
         existing font alpha arithmetic, clipping and dirty-row notification.
@@ -13,7 +13,11 @@
 
         Private implementation included by backend_gfxlib.bas.
 
-    This file does not select glyphs, scale fonts or manage screen pages.
+    This file intentionally does NOT contain:
+
+        - glyph selection
+        - font scaling
+        - display-page lifecycle
 
     All calls belong to the GUI thread, like the other backend drawing calls.
     PUT owns framebuffer locking and clipping. Its synchronous custom blender
@@ -26,6 +30,23 @@ Private Dim Shared As Any Ptr backend_FontSpanImage
 Private Dim Shared As ULong Ptr backend_FontSpanPixels
 Private Dim Shared As Integer backend_FontSpanWidth, backend_FontSpanHeight
 Private Dim Shared As Integer backend_FontSpanPitch
+
+' Skip raster work outside the backend clip before filling a mask. LongInt
+' inputs keep extreme signed bearings from wrapping before the clip check. PUT
+' still owns clipping for glyphs which intersect it, including negative ones.
+Private Function backend_FontSpanVisible(ByVal x As LongInt, ByVal y As LongInt, _
+    ByVal widthValue As LongInt, ByVal heightValue As LongInt) As Integer
+#If Defined(OMAGUI_DISABLE_FONT_SPANS)
+    Return -1
+#Else
+    If widthValue <= 0 OrElse heightValue <= 0 Then Return 0
+    If backend_ClipDepth <= 0 Then Return -1
+    Dim As Integer clipIndex = backend_ClipDepth - 1
+    Return IIf(CLngInt(x) + widthValue > backend_ClipX1(clipIndex) AndAlso _
+        CLngInt(y) + heightValue > backend_ClipY1(clipIndex) AndAlso _
+        x <= backend_ClipX2(clipIndex) AndAlso y <= backend_ClipY2(clipIndex), -1, 0)
+#EndIf
+End Function
 
 Private Sub backend_FontSpanRelease()
     If backend_FontSpanImage <> 0 Then ImageDestroy backend_FontSpanImage
@@ -90,11 +111,17 @@ Private Function backend_FontSpanBlend(ByVal sourcePixel As ULong, _
     Dim As ULong inverseCoverage = 255 - coverage
     ' Match backend_PSetAlpha exactly. PUT ALPHA uses different rounding.
     Dim As ULong redValue = (((clr Shr 16) And 255) * coverage + _
-        ((destinationPixel Shr 16) And 255) * inverseCoverage) \ 255
+        ((destinationPixel Shr 16) And 255) * inverseCoverage)
     Dim As ULong greenValue = (((clr Shr 8) And 255) * coverage + _
-        ((destinationPixel Shr 8) And 255) * inverseCoverage) \ 255
+        ((destinationPixel Shr 8) And 255) * inverseCoverage)
     Dim As ULong blueValue = ((clr And 255) * coverage + _
-        (destinationPixel And 255) * inverseCoverage) \ 255
+        (destinationPixel And 255) * inverseCoverage)
+    ' Each weighted channel lies in 0..65025 because its weights sum to 255.
+    ' This exact quotient avoids three integer divisions per covered pixel on
+    ' the DOS assembly backend, which cannot strength-reduce constant division.
+    redValue = (redValue + 1 + (redValue Shr 8)) Shr 8
+    greenValue = (greenValue + 1 + (greenValue Shr 8)) Shr 8
+    blueValue = (blueValue + 1 + (blueValue Shr 8)) Shr 8
     Return RGB(redValue, greenValue, blueValue)
 End Function
 
@@ -106,4 +133,4 @@ Private Sub backend_FontSpanEnd(ByVal x As Integer, ByVal y As Integer, _
         Custom, @backend_FontSpanBlend, @clr
 End Sub
 
-' end of backend_font_span.bas
+' end of backend_font_span.bi

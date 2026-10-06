@@ -42,6 +42,17 @@
 
 #include "SDL2/SDL.bi"
 #include "SDL2/SDL_ttf.bi"
+#include once "crt/stdio.bi"
+#ifdef __FB_WIN32__
+#include once "windows.bi"
+#elseif defined(__FB_UNIX__)
+#include once "crt/stdlib.bi"
+Extern "C"
+    Declare Function fontgen_CloseFileDescriptor Alias "close" ( _
+        ByVal file_descriptor As Long _
+    ) As Long
+End Extern
+#endif
 
 Const FIRST_GLYPH As Integer = 32
 Const LAST_GLYPH As Integer = 126
@@ -93,11 +104,83 @@ End Extern
 ' Output helpers
 ' -------------------------------------------------------------------------
 
+Function FontPackCreateTemporaryFile( _
+    ByRef output_path As String, ByRef temporary_path As String _
+) As Integer
+
+#ifdef __FB_WIN32__
+    Dim As Integer separator_index = InStrRev(output_path, "\")
+    Dim As Integer alternate_separator_index = InStrRev(output_path, "/")
+    Dim As String directory_path
+    Dim As ZString * MAX_PATH temporary_path_buffer
+
+    If alternate_separator_index > separator_index Then _
+        separator_index = alternate_separator_index
+
+    If separator_index = 0 Then
+        directory_path = "."
+    ElseIf separator_index = 1 Then
+        directory_path = Left(output_path, 1)
+    ElseIf separator_index = 3 AndAlso output_path[1] = Asc(":") Then
+        directory_path = Left(output_path, separator_index)
+    Else
+        directory_path = Left(output_path, separator_index - 1)
+    End If
+
+    If GetTempFileNameA( _
+        directory_path, "ogf", 0, @temporary_path_buffer _
+    ) = 0 Then Return 0
+
+    temporary_path = temporary_path_buffer
+    Return -1
+#elseif defined(__FB_UNIX__)
+    ' fblint: disable-next-line FBL760. mkstemp atomically creates a unique file from this template.
+    temporary_path = output_path & ".tmp.XXXXXX"
+    Dim As Long file_descriptor = mkstemp(StrPtr(temporary_path))
+    If file_descriptor < 0 Then Return 0
+    If fontgen_CloseFileDescriptor(file_descriptor) <> 0 Then
+        remove(StrPtr(temporary_path))
+        Return 0
+    End If
+    Return -1
+#else
+    Return 0
+#endif
+
+End Function
+
+Function FontPackRemoveTemporaryFile(ByRef temporary_path As String) As Integer
+    If Len(temporary_path) = 0 OrElse Len(Dir(temporary_path)) = 0 Then _
+        Return -1
+    Return (remove(temporary_path) = 0)
+End Function
+
+Function FontPackInstallTemporaryFile( _
+    ByRef temporary_path As String, ByRef output_path As String _
+) As Integer
+
+#ifdef __FB_WIN32__
+    ' The temporary file shares the output directory, so replacement stays on one volume.
+    Dim As ULong replace_flags
+    ' fblint: disable-next-line FBL310 -- Windows replacement flags are declared by windows.bi.
+    replace_flags = MOVEFILE_REPLACE_EXISTING Or MOVEFILE_WRITE_THROUGH
+    Return (MoveFileExA( _
+        temporary_path, output_path, replace_flags _
+    ) <> 0)
+#elseif defined(__FB_UNIX__)
+    ' POSIX rename atomically replaces an existing destination on the same filesystem.
+    Return (rename(temporary_path, output_path) = 0)
+#else
+    Return 0
+#endif
+
+End Function
+
 Sub PrintUsage()
     Print "Usage:"
     Print "  font_gen.exe [font-path] [point-size] [symbol-prefix] [data-output.bi] [atlas-output.bmp] [unicode-codepoints.txt] [font-face-index] [font-license]"
     Print "  font_gen.exe --pack [font-path] [point-size] [data-output.ogf] [font-face-index]"
-    Print ""
+    Print
     Print "Example:"
     Print "  font_gen.exe C:\Windows\Fonts\arial.ttf 10 font_arial_10_regular assets\fonts\font_arial_10_regular.bi assets\fonts\font_arial_10_regular.bmp"
     Print "  font_gen.exe --pack assets\fonts\CascadiaMono-Regular.ttf 11 assets\fonts\cascadia_mono.ogf"
@@ -369,6 +452,7 @@ Sub EmitUnicodeGlyphTable( _
 
     Dim As Integer list_position = 1
     Dim As UInteger codepoint
+    Dim As Integer glyph_index
 
     If glyph_count <= 0 Then Exit Sub
 
@@ -383,7 +467,7 @@ Sub EmitUnicodeGlyphTable( _
     EmitLine file_number, use_file, "Sub " & symbol_prefix & _
         "_init_unicode_pointers()"
 
-    For glyph_index As Integer = 0 To glyph_count - 1
+    For glyph_index = 0 To glyph_count - 1
         If NextExtraGlyph(normalized_list, list_position, codepoint) = 0 Then _
             Exit For
         EmitLine file_number, use_file, "    " & symbol_prefix & _
@@ -527,6 +611,7 @@ Private Function FontPackCodepointIsControl( _
 
 End Function
 
+' fblint: disable-next-line FBL111 -- Glyph metrics, SDL surface and output cursor share one record step.
 Function GenerateFontPack( _
     ByRef font_path As String, ByVal point_size As Integer, _
     ByRef output_path As String, ByVal font_face_index As Integer _
@@ -562,7 +647,7 @@ Function GenerateFontPack( _
     Dim As SDL_Color white
     Dim As Const SDL_version Ptr linked_version
     Dim As TTF_Font Ptr font
-    Dim As String temporary_path = output_path & ".tmp"
+    Dim As String temporary_path
     Dim As String file_header
     Dim As String glyph_header
     Dim As String glyph_pixels
@@ -575,7 +660,7 @@ Function GenerateFontPack( _
         Print "ERROR: Font face index must be from 0 through 65535."
         Return 0
     End If
-    If Len(output_path) = 0 OrElse output_path = ".tmp" Then
+    If Len(output_path) = 0 Then
         Print "ERROR: Font pack output path is empty."
         Return 0
     End If
@@ -615,10 +700,17 @@ Function GenerateFontPack( _
         Return 0
     End If
 
-    If Len(Dir(temporary_path)) > 0 Then Kill temporary_path
+    If FontPackCreateTemporaryFile(output_path, temporary_path) = 0 Then
+        Print "ERROR: Could not create a temporary font pack beside " & output_path
+        TTF_CloseFont(font)
+        TTF_Quit()
+        Return 0
+    End If
     file_number = FreeFile
-    If Open(temporary_path For Binary As #file_number) <> 0 Then
+    If Open(temporary_path For Binary Access Write As #file_number) <> 0 Then
         Print "ERROR: Could not open font pack output " & temporary_path
+        If FontPackRemoveTemporaryFile(temporary_path) = 0 Then _
+            Print "WARNING: Could not remove temporary font pack " & temporary_path
         TTF_CloseFont(font)
         TTF_Quit()
         Return 0
@@ -773,7 +865,8 @@ Function GenerateFontPack( _
 
     If invalid_pack <> 0 Then
         Close #file_number
-        If Len(Dir(temporary_path)) > 0 Then Kill temporary_path
+        If FontPackRemoveTemporaryFile(temporary_path) = 0 Then _
+            Print "WARNING: Could not remove temporary font pack " & temporary_path
         TTF_CloseFont(font)
         TTF_Quit()
         Return 0
@@ -782,7 +875,8 @@ Function GenerateFontPack( _
     If glyph_count < 1 Then
         Print "ERROR: The selected font has no renderable glyphs."
         Close #file_number
-        If Len(Dir(temporary_path)) > 0 Then Kill temporary_path
+        If FontPackRemoveTemporaryFile(temporary_path) = 0 Then _
+            Print "WARNING: Could not remove temporary font pack " & temporary_path
         TTF_CloseFont(font)
         TTF_Quit()
         Return 0
@@ -793,8 +887,12 @@ Function GenerateFontPack( _
     TTF_CloseFont(font)
     TTF_Quit()
 
-    If Len(Dir(output_path)) > 0 Then Kill output_path
-    Name temporary_path As output_path
+    If FontPackInstallTemporaryFile(temporary_path, output_path) = 0 Then
+        Print "ERROR: Could not replace font pack output " & output_path
+        If FontPackRemoveTemporaryFile(temporary_path) = 0 Then _
+            Print "WARNING: Could not remove temporary font pack " & temporary_path
+        Return 0
+    End If
     Print "Saved " & Str(glyph_count) & " glyphs to " & output_path
     Return -1
 
@@ -886,7 +984,9 @@ Function GenerateFontData(ByRef font_path As String, _
         If TTF_GlyphIsProvided32(font, codepoint) = 0 Then
             Print "ERROR: Font does not contain Unicode code point " & _
                 Str(codepoint)
-            If use_file <> 0 Then Close #file_number
+            If use_file <> 0 Then
+                Close #file_number
+            End If
             TTF_CloseFont(font)
             TTF_Quit()
             Return 0
@@ -895,7 +995,9 @@ Function GenerateFontData(ByRef font_path As String, _
         If surface = 0 Then
             Print "ERROR: Font does not contain Unicode code point " & _
                 Str(codepoint)
-            If use_file <> 0 Then Close #file_number
+            If use_file <> 0 Then
+                Close #file_number
+            End If
             TTF_CloseFont(font)
             TTF_Quit()
             Return 0

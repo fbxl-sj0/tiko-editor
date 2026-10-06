@@ -107,9 +107,7 @@ Function pixelsurface_Resize( _
                 Dim As ULongInt new_index = CULngInt(row_index) * width_value + column_index
                 Dim As ULongInt old_index = CULngInt(row_index) * surface.width + column_index
                 ' Both offsets lie inside their checked resize intersection.
-                ' fblint: disable-next-line FBL525
                 new_colors[new_index] = surface.colors[old_index]
-                ' fblint: disable-next-line FBL525
                 new_occupied[new_index] = surface.occupied[old_index]
             Next column_index
         Next row_index

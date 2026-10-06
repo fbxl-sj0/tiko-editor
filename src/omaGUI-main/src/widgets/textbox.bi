@@ -23,7 +23,7 @@
         - expose an optional byte limit for native editing commands
         - retain optional caller-supplied client and text colors
         - optionally style embedded glyphs without changing editor metrics
-        - support single-line password display without replacing editor text
+        - support masked single-line input without replacing editor text
         - expose optional synchronous KeyDown, KeyPress, and KeyUp callbacks
         - retain optional syntax-highlighting mode and semantic color metadata
           for keywords, types, objects, members, procedures, and literals
@@ -83,6 +83,8 @@ Type TextBoxTextStyleHandler As Function( _
 /'
     Optional lexer checkpoint for unwrapped viewports. The application owns
     its syntax state; return zero to retain the ordinary callback replay.
+    Successful restoration permits replay to stop below the paint clip once
+    caret geometry is known. Final callback state is not a document-end state.
 '/
 Type TextBoxRenderStateHandler As Function( _
     ByVal w As Widget Ptr, ByVal sourcePosition As Integer, _
@@ -241,7 +243,9 @@ Type TextBoxData
     As Any Ptr key_up_handler
     ' Appended opt-in state preserves existing field offsets. Rebuild clients
     ' with this header when the record grows; it is not a frozen binary ABI.
+    ' FB-LINTER: DISABLE-NEXT-LINE FBL008 FBL-SEC-004 REASON: These are mask-state fields, not stored source text.
     As Integer password_character, password_saved_wordwrap
+    ' FB-LINTER: DISABLE-NEXT-LINE FBL008 FBL-SEC-004 REASON: This cached display contains only mask glyphs.
     As String password_display
     As String placeholder_text
     ' Existing editors keep visible selections on blur unless opted out.
@@ -306,6 +310,16 @@ Type TextBoxData
     As TextBoxMetricsStateHandler metrics_state_handler
     As Integer metrics_gutter_width, metrics_total_lines
     As Integer metrics_vertical_visible, metrics_horizontal_visible
+    ' A fixed row index belongs to the exact metrics observation above. It
+    ' stores unwrapped visible rows only and is consumed after metrics refresh.
+    ' Thirty-two checkpoints bound storage on DOS and avoid full prefix walks.
+    As Integer metrics_row_count
+    As Integer metrics_row_index(0 To 31), metrics_row_position(0 To 31)
+    As Integer metrics_row_source_number(0 To 31)
+    As Integer metrics_row_source_length
+    As String metrics_row_visibility_key
+    As TextBoxLineVisibilityHandler metrics_row_visibility_handler
+    As TextBoxMetricsStateHandler metrics_row_state_handler
     As Integer rendered_caret_x, rendered_caret_y
     As Integer rendered_caret_w, rendered_caret_h
 End Type
@@ -332,7 +346,7 @@ Declare Function textbox_GetCursorRowRenderDamage(ByVal w As Widget Ptr, _
     ByRef widthValue As Integer, ByRef heightValue As Integer) As Integer
 Declare Sub textbox_Update(ByVal w As Widget Ptr)
 Declare Function textbox_GetText(ByVal w As Widget Ptr) As String
-' Zero clears password mode; visible ASCII bytes 33..126 select its mask.
+' Zero clears mask mode; visible ASCII bytes 33..126 select its glyph.
 ' Only single-line TextBoxes accept a mask. Text/selection queries stay real.
 Declare Function textbox_SetPasswordChar( _
     ByVal w As Widget Ptr, ByVal character_code As Integer _

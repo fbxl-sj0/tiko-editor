@@ -26,7 +26,9 @@ Sub backend_PrintStyled( _
     ByVal text As String, ByVal text_style As Integer, _
     ByVal font_id As Integer _
 )
-    If backend_HeadlessActive Then Exit Sub
+    ' Drawable tests own a real framebuffer; only screenless mode omits text.
+    ' fblint: disable-next-line FBL310 -- state is declared by the including backend module.
+    If backend_HeadlessActive = BACKEND_HEADLESS Then Exit Sub
     If (text_style And Not BACKEND_TEXT_STYLE_ALL) <> 0 Then Exit Sub
     If text_style = BACKEND_TEXT_STYLE_NORMAL Then
         backend_PrintFont x, y, clr, text, font_id
@@ -43,7 +45,8 @@ Sub backend_PrintStyled( _
     Dim As Integer bold_extra = IIf(text_style And BACKEND_TEXT_STYLE_BOLD, 1, 0)
     For character_index As Integer = 0 To Len(text) - 1
         If current_x >= clip_x + clip_width Then Exit For
-        Dim As UByte Ptr glyph = backend_FontGlyph(font_id, text[character_index])
+        Dim As Integer character_code = Asc(text, character_index + 1)
+        Dim As UByte Ptr glyph = backend_FontGlyph(font_id, character_code)
         If glyph = 0 Then Continue For
         ' The embedded generator owns each block: byte width, byte height,
         ' then exactly width * height row-major coverage bytes. Bold's extra

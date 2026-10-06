@@ -37,8 +37,18 @@ End Function
 Private Function pixelValue(ByVal imageValue As RasterImage Ptr, ByVal x As Integer, ByVal y As Integer) As ULong
     Dim As Integer w, h, bpp, pitch, bufferSize
     Dim As Any Ptr pixelBytes
-    requireValue(ImageInfo(imageValue->pixels, w, h, bpp, pitch, pixelBytes, bufferSize) = 0, "read decoded pixels")
-    requireValue(bpp = 4 AndAlso pixelBytes <> 0 AndAlso x >= 0 AndAlso x < w AndAlso y >= 0 AndAlso y < h, "pixel within decoded image")
+    If ImageInfo(imageValue->pixels, w, h, bpp, pitch, pixelBytes, bufferSize) <> 0 Then
+        requireValue(0, "read decoded pixels")
+        Return 0
+    End If
+    If bpp <> 4 OrElse pixelBytes = 0 OrElse w < 1 OrElse h < 1 OrElse _
+       pitch < w * 4 OrElse CLngInt(pitch) * CLngInt(h) > bufferSize OrElse _
+       x < 0 OrElse x >= w OrElse y < 0 OrElse y >= h Then
+        requireValue(0, "pixel within decoded image buffer")
+        Return 0
+    End If
+    ' ImageInfo validates the allocation; x and y were checked above.
+    ' FB-LINTER: DISABLE-NEXT-LINE FBL525 FBL-PTR-019 REASON: The pixel coordinate and image buffer extent are explicitly validated.
     Return Cast(ULong Ptr, Cast(UByte Ptr, pixelBytes) + y * pitch)[x]
 End Function
 

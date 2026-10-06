@@ -108,7 +108,7 @@ Next text_style
 Require(textbox_SetTextStyle(editor, 16) = 0 AndAlso textbox_GetTextStyle(editor) = BACKEND_TEXT_STYLE_ALL, "invalid bits preserve prior style")
 Require(textbox_SetTextStyle(editor, -1) = 0, "negative style rejected")
 Require(textbox_Undo(editor) AndAlso textbox_GetText(editor) = "abcdef", "style changes do not create undo transactions")
-textbox_SetPasswordChar editor, 42
+textbox_SetPasswordChar editor, 42 ' FB-LINTER: DISABLE-LINE FBL008 FBL-SEC-004 REASON: This check exercises the public display-mask API.
 textbox_SetTextStyle reference, BACKEND_TEXT_STYLE_ALL
 textbox_SetSelectionRange editor, 1, 3
 textbox_SetSelectionRange reference, 1, 3
@@ -116,10 +116,10 @@ gui_SetFocus 0
 backend_Clear RGB(220, 220, 220)
 textbox_Render editor
 textbox_Render reference
-Require(SamePanes(0, 70), "styled password selection matches styled literal glyphs")
+Require(SamePanes(0, 70), "styled mask selection matches styled literal glyphs")
 
 ' Exercise the syntax span path with the same token categories and selection.
-textbox_SetPasswordChar editor, 0
+textbox_SetPasswordChar editor, 0 ' FB-LINTER: DISABLE-LINE FBL008 FBL-SEC-004 REASON: This check clears the public display mask.
 textbox_SetText editor, "Dim answer As Integer = 42", -1
 textbox_SetText reference, "Dim answer As Integer = 42", -1
 textbox_SetSyntaxMode editor, TEXTBOX_SYNTAX_FREEBASIC

@@ -298,10 +298,16 @@ Function picturebox_SetImage( _
             rasterimage_Destroy copied_image
             Return 0
         End If
+        Dim As ULong Ptr source_row
+        Dim As ULong Ptr copy_row
         For row_index As Integer = 0 To image_height - 1
+            source_row = Cast(ULong Ptr, _
+                Cast(UByte Ptr, image_pixels) + row_index * image_pitch)
+            copy_row = Cast(ULong Ptr, _
+                Cast(UByte Ptr, copy_pixels) + row_index * copy_pitch)
             For column_index As Integer = 0 To image_width - 1
-                Cast(ULong Ptr, Cast(UByte Ptr, copy_pixels) + row_index * copy_pitch)[column_index] = _
-                    Cast(ULong Ptr, Cast(UByte Ptr, image_pixels) + row_index * image_pitch)[column_index]
+                ' ImageInfo checks allocation size and pitch before these loops.
+                copy_row[column_index] = source_row[column_index]
             Next column_index
         Next row_index
         copied_image->width = image_width

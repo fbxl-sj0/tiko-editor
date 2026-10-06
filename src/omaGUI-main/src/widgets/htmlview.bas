@@ -904,8 +904,11 @@ Private Function htmlview_CssSelectorMatches( _
         )
     End If
     If Left(selectorText, 1) = "#" Then
+        If Len(selectorText) < 2 Then Return 0
         attributeValue = LCase(htmlview_GetAttribute(attributeText, "id"))
-        Return IIf(attributeValue = Mid(selectorText, 2), -1, 0)
+        Return IIf( _
+            "#" & attributeValue = selectorText, -1, 0 _
+        )
     End If
     Return IIf(selectorText = LCase(tagName), -1, 0)
 
@@ -2970,6 +2973,7 @@ Private Sub htmlview_InitializeParseContext( _
 End Sub
 
 
+' fblint: disable-next-line FBL110,FBL111 -- This bounded step advances markup and style-stack state together.
 Private Function htmlview_ParseContextStep( _
     ByRef parseContext As HtmlViewParseContext, _
     ByVal timeBudgetMilliseconds As Integer _

@@ -55,7 +55,7 @@ Sub AssertTrue(ByVal condition As Integer, ByVal msg As String)
 End Sub
 
 Sub test_Summary()
-    Print ""
+    Print
     Print "========================================="
     Print "TEST SUMMARY"
     Print "  Passed: " & test_total_pass

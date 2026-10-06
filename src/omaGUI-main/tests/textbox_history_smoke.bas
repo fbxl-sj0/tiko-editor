@@ -60,7 +60,7 @@ Const TEXTBOX_HISTORY_SMOKE_EXIT_DIVERGENT As Integer = 5
 Const TEXTBOX_HISTORY_SMOKE_EXIT_RESET As Integer = 6
 Const TEXTBOX_HISTORY_SMOKE_EXIT_BOUND As Integer = 7
 
-' Failure cleanup is shared with the assertions below. FB-LINTER: DISABLE-NEXT-LINE FBL301
+' Failure cleanup is shared with the assertions below.
 Dim Shared textboxHistorySmoke_BackendActive As Integer
 
 

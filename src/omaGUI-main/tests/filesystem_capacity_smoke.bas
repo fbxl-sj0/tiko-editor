@@ -37,10 +37,8 @@ If Len(fixture_root) = 0 OrElse MkDir(fixture_root) <> 0 Then End 1
 For item_index As Integer = 0 To LISTBOX_MAX_ITEMS
     Dim As Integer file_number = FreeFile
     ' The directory must have been newly created; no existing path is reused.
-    ' fblint: disable-next-line FBL760
     Dim As String file_path = fixture_root & "/row_" & LTrim(Str(item_index)) & ".fixture"
     ' Predictable rows are confined to the directory this test just created.
-    ' fblint: disable-next-line FBL760
     If Open(file_path For Output As #file_number) <> 0 Then
         failure_count += 1
         Exit For
@@ -68,7 +66,6 @@ Else
     End If
     If created_count = LISTBOX_MAX_ITEMS + 1 Then
         ' Exact file owned by this test; removing it reaches the accepted bound.
-        ' fblint: disable-next-line FBL760
         If Kill(fixture_root & "/row_" & LTrim(Str(LISTBOX_MAX_ITEMS)) & ".fixture") = 0 Then
             created_count -= 1
             If filelistbox_Refresh(list_widget, fixture_root, "*") = 0 OrElse _
@@ -93,7 +90,6 @@ backend_Exit
 ' entries: remove the exact counted filenames, then require an empty directory.
 For item_index As Integer = 0 To created_count - 1
     ' These are the exact counted rows created in this test's private directory.
-    ' fblint: disable-next-line FBL760
     If Kill(fixture_root & "/row_" & LTrim(Str(item_index)) & ".fixture") <> 0 Then failure_count += 1
 Next item_index
 If RmDir(fixture_root) <> 0 Then failure_count += 1

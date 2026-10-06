@@ -40,6 +40,7 @@
 #include once "src/backend/clipboard.bi"
 #include once "src/backend/font_data.bi"
 #include once "src/system/filesystem.bi"
+#include once "src/system/byte_span.bi"
 #include once "src/images/raster_image.bi"
 #include once "src/archive/chmarchive.bi"
 

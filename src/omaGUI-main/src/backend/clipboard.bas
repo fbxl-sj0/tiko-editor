@@ -71,7 +71,7 @@
     bounded copy remains available when the selected host integration cannot
     be compiled or reached, and it keeps intra-application editing reliable.
 '/
-' This is boundary-owned process state. FB-LINTER: DISABLE-NEXT-LINE FBL301
+' This is boundary-owned process state.
 Dim Shared clipboard_FallbackText As String
 
 
@@ -130,7 +130,7 @@ Private Function clipboard_WindowsGetText() As String
                 resultText = clipboard_BoundedText(resultText)
             End If
 
-            ' Win32 import exists only inside this backend. FB-LINTER: DISABLE-NEXT-LINE FBL310
+            ' Win32 import exists only inside this backend.
             GlobalUnlock clipboardHandle
         End If
     End If
@@ -157,7 +157,7 @@ Private Function clipboard_WindowsSetText( _
         Return 0
     End If
 
-    ' Movable ownership is required by SetClipboardData. FB-LINTER: DISABLE-NEXT-LINE FBL310
+    ' Movable ownership is required by SetClipboardData.
     allocationFlags = GMEM_MOVEABLE Or GMEM_ZEROINIT
     clipboardHandle = GlobalAlloc(allocationFlags, Len(textValue) + 1)
 
@@ -169,17 +169,17 @@ Private Function clipboard_WindowsSetText( _
     clipboardMemory = GlobalLock(clipboardHandle)
 
     If clipboardMemory = 0 Then
-        GlobalFree clipboardHandle ' Conditional Win32 import. FB-LINTER: DISABLE-LINE FBL310
+        GlobalFree clipboardHandle ' Conditional Win32 import.
         CloseClipboard()
         Return 0
     End If
 
     *Cast(ZString Ptr, clipboardMemory) = textValue
-    GlobalUnlock clipboardHandle ' Conditional Win32 import. FB-LINTER: DISABLE-LINE FBL310
+    GlobalUnlock clipboardHandle ' Conditional Win32 import.
     clipboardResult = SetClipboardData(CF_TEXT, clipboardHandle)
 
     If clipboardResult = 0 Then _
-        GlobalFree clipboardHandle ' Conditional Win32 import. FB-LINTER: DISABLE-LINE FBL310
+        GlobalFree clipboardHandle ' Conditional Win32 import.
     CloseClipboard()
 
     Return IIf(clipboardResult <> 0, 1, 0)
