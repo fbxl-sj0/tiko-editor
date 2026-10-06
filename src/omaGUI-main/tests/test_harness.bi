@@ -12,6 +12,7 @@
 
         - count passing and failing assertions
         - label test sections
+        - retain failures for the final text-mode summary
         - return a failing process status when assertions fail
 
     Targets:
@@ -38,6 +39,7 @@
 Dim Shared As Integer test_total_pass
 Dim Shared As Integer test_total_fail
 Dim Shared As String current_section
+Dim Shared As String test_failure_messages
 
 Sub test_Section(ByVal nm As String)
     Print "--- SECTION: " & nm & " ---"
@@ -48,6 +50,8 @@ Sub AssertTrue(ByVal condition As Integer, ByVal msg As String)
     If condition = 0 Then
         Print "  [FAIL] " & msg
         test_total_fail += 1
+        test_failure_messages &= "  [FAIL] " & current_section & ": " & _
+            msg & Chr(10)
     Else
         Print "  [PASS] " & msg
         test_total_pass += 1
@@ -62,6 +66,7 @@ Sub test_Summary()
     Print "  Failed: " & test_total_fail
     Print "========================================="
     If test_total_fail > 0 Then
+        If test_failure_messages <> "" Then Print test_failure_messages;
         Print "RESULT: FAILURE"
         End 1
     Else

@@ -154,8 +154,8 @@ Function system_IsDirectory(ByRef directoryPath As Const String) As Integer
 
 #if defined(__FB_WIN32__)
     Dim As DWORD attributes = GetFileAttributesA(StrPtr(directoryPath))
-    If attributes = INVALID_FILE_ATTRIBUTES Then Return 0
-    Return IIf((attributes And FILE_ATTRIBUTE_DIRECTORY) <> 0, -1, 0)
+    If attributes = INVALID_FILE_ATTRIBUTES Then Return 0 ' FB-LINTER: DISABLE-LINE FBL310 REASON: windows.bi declares this Win32 SDK sentinel.
+    Return IIf((attributes And FILE_ATTRIBUTE_DIRECTORY) <> 0, -1, 0) ' FB-LINTER: DISABLE-LINE FBL310 REASON: windows.bi declares this Win32 SDK attribute.
 #else
     Dim As Integer attributes
     Dim As String lookupPath = directoryPath
