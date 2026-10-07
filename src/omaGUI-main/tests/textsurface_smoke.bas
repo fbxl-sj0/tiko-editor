@@ -3,7 +3,15 @@
     File: textsurface_smoke.bas
     Purpose: Verify retained byte-cell storage and native PictureBox rendering.
     Responsibilities: Exercise bounds, ownership, clipping, colors, and CP437.
-    This file intentionally does NOT implement a BASIC cursor or PRINT parser.
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
+    This file intentionally does NOT contain: a BASIC cursor or PRINT parser.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY
@@ -99,6 +107,17 @@ Require backend_RestoreDisplay(saved_display), __LINE__
 backend_Clear 0
 gui_RenderAll
 Require (Point(30, 50) And &hFFFFFF) = &hFF0000, __LINE__
+Require picturebox_SetBorderStyle( _
+    picture_widget, PICTUREBOX_BORDER_DOUBLE _
+), __LINE__
+backend_Clear RGB(17, 17, 17)
+gui_RenderAll
+Dim As ULong double_border_color = theme_GetColor(GUI_COLOR_BORDER)
+Require (Point(20, 30) And &hFFFFFF) = _
+    (double_border_color And &hFFFFFF), __LINE__
+Require (Point(21, 31) And &hFFFFFF) = _
+    (double_border_color And &hFFFFFF), __LINE__
+Require (Point(22, 32) And &hFFFFFF) = &h0000FF, __LINE__
 picturebox_ClearPrint picture_widget
 Require Cast(PictureBoxData Ptr, picture_widget->data)->text = "caption", __LINE__
 Require picturebox_ReadPrintCell(picture_widget, 0, 0, cell) = 0, __LINE__

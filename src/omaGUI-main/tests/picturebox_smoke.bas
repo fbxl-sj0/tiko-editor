@@ -16,6 +16,14 @@
         - set, query, and clear an explicit client background color
         - reject an unsupported border style without changing retained state
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - screenshot comparisons
@@ -90,6 +98,17 @@ If picturebox_SetBorderStyle(picture_widget, 99) <> 0 Then
 ElseIf Cast(PictureBoxData Ptr, picture_widget->data)->border_style <> _
        PICTUREBOX_BORDER_SINGLE Then
     Print "FAIL invalid border changed retained state"
+    failure_count += 1
+End If
+
+If picturebox_SetBorderStyle( _
+    picture_widget, PICTUREBOX_BORDER_DOUBLE _
+) = 0 Then
+    Print "FAIL double-line border rejected"
+    failure_count += 1
+ElseIf Cast(PictureBoxData Ptr, picture_widget->data)->border_style <> _
+       PICTUREBOX_BORDER_DOUBLE OrElse picture_widget->child_clip_x <> 2 Then
+    Print "FAIL double-line border client inset"
     failure_count += 1
 End If
 

@@ -15,6 +15,14 @@
         - accept the selection and verify its stable result
         - verify the canonical palette mapping
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - native desktop interaction
@@ -37,7 +45,17 @@ gui_Init
 dialog_widget = colordialog_Create( _
     "color_smoke", "Choose a color", 70, 80, 3 _
 )
+If dialog_widget = 0 OrElse _
+   gui_IsWidgetRegistered(dialog_widget) = 0 OrElse _
+   gui_IsModalOpen() = 0 Then
+    Print "FAIL color dialog root registration"
+    failure_count += 1
+End If
 gui_AddWidget dialog_widget
+If dialog_widget <> 0 AndAlso dialog_widget->name <> "color_smoke" Then
+    Print "FAIL repeated registration changed color dialog identity"
+    failure_count += 1
+End If
 If dialog_widget = 0 OrElse colordialog_GetSelectedIndex(dialog_widget) <> 3 Then
     Print "FAIL color dialog construction"
     failure_count += 1

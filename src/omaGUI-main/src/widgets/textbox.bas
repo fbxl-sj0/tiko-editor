@@ -98,6 +98,9 @@ Const TEXTBOX_DOUBLE_QUOTE As Integer = 34
 
 Dim Shared As Widget Ptr textbox_context_menu = 0
 Dim Shared As Widget Ptr active_textbox = 0
+' KeyDown callbacks run on the GUI thread. A nested Update must not dispatch
+' the same input frame again while a callback is active.
+Dim Shared As Integer textbox_key_down_dispatch_depth
 
 ' -------------------------------------------------------------------------
 ' Internal helpers
@@ -4317,6 +4320,38 @@ Private Function textbox_HandleKeyEventInput( _
 End Function
 
 
+' The source KeyDown handler runs before standard editor commands so its
+' remapped scan code or cancellation applies to this same input frame.
+Private Function textbox_DispatchKeyDown( _
+    ByVal w As Widget Ptr, ByVal textData As TextBoxData Ptr, _
+    ByVal registryId As ULongInt _
+) As Integer
+    If w = 0 OrElse textData = 0 Then Return 0
+    If textbox_key_down_dispatch_depth <> 0 Then Return 0
+    If w->has_focus = 0 OrElse textData->key_down_handler = 0 Then Return -1
+
+    Dim As Long event_count = input_KeyEventCount()
+    For event_index As Long = 0 To event_count - 1
+        Dim As InputKeyEvent ordered_event
+        If input_ReadKeyEvent(event_index, ordered_event) = 0 Then Continue For
+        If ordered_event.event_kind <> INPUT_KEY_EVENT_PRESS AndAlso _
+           ordered_event.event_kind <> INPUT_KEY_EVENT_REPEAT Then Continue For
+        Dim As Integer callback_key = ordered_event.scan_code
+        Dim As Integer callback_modifiers = ordered_event.modifiers
+        textbox_key_down_dispatch_depth += 1
+        Cast(Sub(ByVal As Widget Ptr, ByRef As Integer, ByRef As Integer), _
+            textData->key_down_handler)(w, callback_key, callback_modifiers)
+        textbox_key_down_dispatch_depth -= 1
+        If textbox_CallbackTargetGone(w, registryId) OrElse _
+           w->has_focus = 0 Then Return 0
+        If input_SetKeyEventMapping( _
+            ordered_event.scan_code, callback_key _
+        ) = 0 Then Return 0
+    Next event_index
+    Return -1
+End Function
+
+
 ' -------------------------------------------------------------------------
 ' Public widget API
 ' -------------------------------------------------------------------------
@@ -4928,6 +4963,7 @@ Function textbox_Create( _
     textData->surface_border_color = TEXTBOX_WIDGET_COLOR_DEFAULT
     textData->surface_background_color = TEXTBOX_WIDGET_COLOR_DEFAULT
     textData->surface_text_color = TEXTBOX_WIDGET_COLOR_DEFAULT
+    textData->border_style = TEXTBOX_BORDER_SINGLE
     textData->line_range_highlight_first = -1
     textData->line_range_highlight_last = -1
     textData->line_numbers_visible = -1
@@ -4994,9 +5030,9 @@ End Function
 ' Stack fields avoid temporary strings on idle comparisons. Keep pointer
 ' values widened through the native unsigned width, as the original key does.
 Private Type Textbox_RenderFields
-    As LongInt values(0 To 68)
+    As LongInt values(0 To 69)
 End Type
-#assert SizeOf(Textbox_RenderFields) = 69 * SizeOf(LongInt)
+#assert SizeOf(Textbox_RenderFields) = 70 * SizeOf(LongInt)
 Private Sub textbox_RenderFillFields(ByVal d As TextBoxData Ptr, ByRef fields As Textbox_RenderFields)
     fields.values(0) = d->active
     fields.values(1) = d->multiline
@@ -5067,6 +5103,7 @@ Private Sub textbox_RenderFillFields(ByVal d As TextBoxData Ptr, ByRef fields As
     fields.values(66) = CLngInt(CUInt(d->fold_marker_handler))
     fields.values(67) = CLngInt(CUInt(d->line_visibility_handler))
     fields.values(68) = CLngInt(CUInt(d->render_state_handler))
+    fields.values(69) = d->border_style
 End Sub
 
 Private Function textbox_RenderObservationHeader(ByVal w As Widget Ptr) As String
@@ -5118,6 +5155,7 @@ Function textbox_RenderObservationMatches(ByVal w As Widget Ptr, _
     Dim As TextBoxData Ptr d = w->data
     Dim As Textbox_RenderFields fields
     Const suffixBytes As Integer = 65
+    ' fblint: disable-next-line FBL310 -- this private type is declared above and compiled here.
     Const fixedHeaderBytes As Integer = SizeOf(Textbox_RenderFields) + 8
     Dim As Integer available = Len(previousKey) - observationOffset
     If available < fixedHeaderBytes + suffixBytes Then Return 0
@@ -5225,6 +5263,24 @@ Function textbox_GetCursorRowRenderDamage(ByVal w As Widget Ptr, _
 End Function
 
 
+Private Sub textbox_RenderFrame( _
+    ByVal w As Widget Ptr, ByVal textData As TextBoxData Ptr, _
+    ByVal backgroundColor As ULong, ByVal borderColor As ULong _
+)
+    If w = 0 OrElse textData = 0 Then Exit Sub
+    If textData->border_style = TEXTBOX_BORDER_NONE Then
+        backend_Rect w->ax, w->ay, w->w, w->h, backgroundColor, 1
+    Else
+        ' BorderStyle changes only the frame; the existing two-pixel content
+        ' inset keeps caret and selection metrics stable across property writes.
+        backend_Rect w->ax, w->ay, w->w, w->h, borderColor, 0
+        backend_Rect w->ax + 1, w->ay + 1, w->w - 2, w->h - 2, _
+            backgroundColor, 1
+    End If
+End Sub
+
+
+
 ' fblint: disable-next-line FBL111 -- Visible rows, caret and scrollbars share one frame layout state.
 Sub textbox_Render(ByVal w As Widget Ptr)
 
@@ -5272,9 +5328,7 @@ Sub textbox_Render(ByVal w As Widget Ptr)
     Dim As ULong borderColor = current_theme.bg_dark
     If textData->surface_border_color <> TEXTBOX_WIDGET_COLOR_DEFAULT Then _
         borderColor = textData->surface_border_color
-    backend_Rect w->ax, w->ay, w->w, w->h, borderColor, 0
-    backend_Rect w->ax + 1, w->ay + 1, w->w - 2, w->h - 2, _
-        backgroundColor, 1
+    textbox_RenderFrame w, textData, backgroundColor, borderColor
     textClipWidth = w->w - 4
     If textData->scrollbar_visible <> 0 Then
         textClipWidth -= TEXTBOX_SCROLLBAR_WIDTH + TEXTBOX_SCROLLBAR_INSET
@@ -5583,23 +5637,11 @@ Sub textbox_Update(ByVal w As Widget Ptr)
     active_textbox = w
     textbox_RefreshKeyLatch textData
 
+    If textbox_DispatchKeyDown(w, textData, updateRegistryId) = 0 Then _
+        Exit Sub
+
     If textbox_HandleKeyEventInput(w, textData) <> 0 Then Exit Sub
     If textbox_CallbackTargetGone(w, updateRegistryId) Then Exit Sub
-
-    If w->has_focus <> 0 AndAlso textData->key_down_handler <> 0 Then
-        Dim As Long event_count = input_KeyEventCount()
-        For event_index As Long = 0 To event_count - 1
-            Dim As InputKeyEvent ordered_event
-            If input_ReadKeyEvent(event_index, ordered_event) = 0 Then Continue For
-            If ordered_event.event_kind <> INPUT_KEY_EVENT_PRESS AndAlso _
-               ordered_event.event_kind <> INPUT_KEY_EVENT_REPEAT Then Continue For
-            Dim As Integer callback_key = ordered_event.scan_code
-            Dim As Integer callback_modifiers = ordered_event.modifiers
-            Cast(Sub(ByVal As Widget Ptr, ByRef As Integer, ByRef As Integer), _
-                textData->key_down_handler)(w, callback_key, callback_modifiers)
-            If textbox_CallbackTargetGone(w, updateRegistryId) Then Exit Sub
-        Next event_index
-    End If
 
     controlInputHandled = textbox_HandleControlInput(w, textData)
     If textbox_CallbackTargetGone(w, updateRegistryId) Then Exit Sub
@@ -5751,6 +5793,22 @@ End Function
 Function textbox_GetTextStyle(ByVal w As Widget Ptr) As Integer
     If w = 0 OrElse w->destroy <> @textbox_Destroy OrElse w->data = 0 Then Return 0
     Return Cast(TextBoxData Ptr, w->data)->text_style
+End Function
+
+Function textbox_SetBorderStyle( _
+    ByVal w As Widget Ptr, ByVal border_style As Integer _
+) As Integer
+    If w = 0 OrElse w->data = 0 OrElse w->destroy <> @textbox_Destroy Then Return 0
+    If border_style < TEXTBOX_BORDER_NONE OrElse _
+       border_style > TEXTBOX_BORDER_SINGLE Then Return 0
+    Cast(TextBoxData Ptr, w->data)->border_style = border_style
+    Return -1
+End Function
+
+
+Function textbox_GetBorderStyle(ByVal w As Widget Ptr) As Integer
+    If w = 0 OrElse w->data = 0 OrElse w->destroy <> @textbox_Destroy Then Return 0
+    Return Cast(TextBoxData Ptr, w->data)->border_style
 End Function
 
 Function textbox_SetInputLimit(ByVal w As Widget Ptr, ByVal byte_limit As Long) As Integer

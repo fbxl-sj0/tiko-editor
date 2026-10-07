@@ -6,6 +6,14 @@
         - retain presses, releases, repeats, bytes, and exact chord order
         - check masks, copy ownership, bounds, overflow, and screen handoff
         - exercise native FB.Event translation without operating-system injection
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
         - VBDOS event handlers or a keyboard-layout translator
         - assertions about physical keyboard delivery by a platform driver
@@ -194,6 +202,29 @@ keyEvents_Check 0, INPUT_KEY_EVENT_PRESS, KEY_RETURN, 0, 0
 input_MockKey KEY_RETURN, 0
 input_Update
 keyEvents_Check 0, INPUT_KEY_EVENT_RELEASE, KEY_RETURN, 0, 0
+
+' A focused KeyDown handler can redirect default control input or suppress it.
+input_ResetForTest
+input_MockKey(KEY_LEFT, -1)
+input_Update
+keyEvents_Require input_SetKeyEventMapping(KEY_LEFT, KEY_RIGHT), __LINE__
+keyEvents_Require input_KeyPressed(KEY_RIGHT) AndAlso _
+    input_KeyPressEvent(KEY_RIGHT) AndAlso _
+    input_KeyPressed(KEY_LEFT) = 0, __LINE__
+Dim As Integer mapped_scan_code, mapped_modifiers
+keyEvents_Require input_KeyEvent( _
+    0, mapped_scan_code, mapped_modifiers _
+) AndAlso mapped_scan_code = KEY_RIGHT, __LINE__
+keyEvents_Require input_SetKeyEventMapping(KEY_LEFT, 0), __LINE__
+keyEvents_Require input_KeyPressed(KEY_RIGHT) = 0 AndAlso _
+    input_KeyPressEvent(KEY_RIGHT) = 0 AndAlso _
+    input_KeyEvent(0, mapped_scan_code, mapped_modifiers) = 0, __LINE__
+keyEvents_Require input_ReadKeyEvent(0, savedEvent) AndAlso _
+    savedEvent.scan_code = KEY_LEFT, __LINE__
+input_MockKey(KEY_LEFT, 0)
+input_Update
+keyEvents_Require input_KeyPressed(KEY_LEFT) = 0 AndAlso _
+    input_SetKeyEventMapping(-1, KEY_LEFT) = 0, __LINE__
 input_ResetForTest
 Print "key_events_smoke: PASS (ordered events, exact chords, native translation, bounds and handoff)"
 

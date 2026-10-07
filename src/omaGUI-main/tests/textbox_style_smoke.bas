@@ -3,7 +3,15 @@
     File: textbox_style_smoke.bas
     Purpose: Verify opt-in text styling on the actual portable framebuffer.
     Responsibilities: Check glyph coverage, clipping, editor state and masks.
-    This file intentionally does NOT rely on installed fonts or native controls.
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
+    This file intentionally does NOT contain: installed fonts or native controls.
 '/
 #lang "fb"
 #define OMAGUI_IMPLEMENTATION
@@ -87,6 +95,19 @@ gui_AddWidget other
 gui_SynchronizeLayout
 Require(textbox_GetTextStyle(editor) = BACKEND_TEXT_STYLE_NORMAL, "existing editors remain unstyled")
 Require(textbox_SetTextStyle(0, 1) = 0 AndAlso textbox_SetTextStyle(other, 1) = 0, "setter validates widget provider")
+Require(textbox_GetBorderStyle(editor) = TEXTBOX_BORDER_SINGLE, "existing TextBoxes retain the single-line default")
+Require(textbox_SetBackgroundColor(editor, RGB(0, 0, 255)), "border test background")
+backend_Clear RGB(255, 255, 255)
+textbox_Render editor
+Require((Point(10, 10) And &hFFFFFF) = (current_theme.bg_dark And &hFFFFFF), "single-line frame remains visible")
+Require(textbox_SetBorderStyle(editor, TEXTBOX_BORDER_NONE), "borderless style accepted")
+backend_Clear RGB(255, 255, 255)
+textbox_Render editor
+Require((Point(10, 10) And &hFFFFFF) = &h0000FF, "borderless style paints the client edge")
+Require(textbox_SetBorderStyle(editor, 2) = 0 AndAlso _
+    textbox_GetBorderStyle(editor) = TEXTBOX_BORDER_NONE, "invalid border preserves state")
+Require(textbox_SetBorderStyle(editor, TEXTBOX_BORDER_SINGLE), "single-line style restored")
+Require(textbox_ClearBackgroundColor(editor), "border test background cleared")
 textbox_SetSelectionRange editor, 1, 2
 textbox_InsertAtSelection editor, "XY"
 textbox_SetSelectionRange editor, 1, 3
@@ -100,7 +121,7 @@ Next text_style
 Require(textbox_SetTextStyle(editor, 16) = 0 AndAlso textbox_GetTextStyle(editor) = BACKEND_TEXT_STYLE_ALL, "invalid bits preserve prior style")
 Require(textbox_SetTextStyle(editor, -1) = 0, "negative style rejected")
 Require(textbox_Undo(editor) AndAlso textbox_GetText(editor) = "abcdef", "style changes do not create undo transactions")
-textbox_SetPasswordChar editor, 42 ' FB-LINTER: DISABLE-LINE FBL008 FBL-SEC-004 REASON: This check exercises the public display-mask API.
+textbox_SetPasswordChar editor, 42 ' FB-LINTER: DISABLE-LINE FBL008 FBL-SEC-004 REASON: This tests the public display-mask API.
 textbox_SetTextStyle reference, BACKEND_TEXT_STYLE_ALL
 textbox_SetSelectionRange editor, 1, 3
 textbox_SetSelectionRange reference, 1, 3
@@ -111,7 +132,7 @@ textbox_Render reference
 Require(SamePanes(0, 70), "styled mask selection matches styled literal glyphs")
 
 ' Exercise the syntax span path with the same token categories and selection.
-textbox_SetPasswordChar editor, 0 ' FB-LINTER: DISABLE-LINE FBL008 FBL-SEC-004 REASON: This check clears the public display mask.
+textbox_SetPasswordChar editor, 0 ' FB-LINTER: DISABLE-LINE FBL008 FBL-SEC-004 REASON: This clears the display mask.
 textbox_SetText editor, "Dim answer As Integer = 42", -1
 textbox_SetText reference, "Dim answer As Integer = 42", -1
 textbox_SetSyntaxMode editor, TEXTBOX_SYNTAX_FREEBASIC

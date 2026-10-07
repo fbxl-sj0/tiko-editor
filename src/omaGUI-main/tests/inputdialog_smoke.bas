@@ -15,6 +15,14 @@
         - verify copied text, boolean choices, and result state
         - verify unmodified Escape reports cancellation through the dialog
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - application-specific validation
@@ -42,7 +50,17 @@ dialog_widget = inputdialog_Create( _
     "Change to", "beta", "Match case", 0, "Whole word", -1, _
     70, 70, "Change" _
 )
+If dialog_widget = 0 OrElse _
+   gui_IsWidgetRegistered(dialog_widget) = 0 OrElse _
+   gui_IsModalOpen() = 0 Then
+    Print "FAIL input dialog root registration"
+    failure_count += 1
+End If
 gui_AddWidget dialog_widget
+If dialog_widget <> 0 AndAlso dialog_widget->name <> "input_smoke" Then
+    Print "FAIL repeated registration changed input dialog identity"
+    failure_count += 1
+End If
 second_field = gui_FindWidget("input_smoke_field_1")
 second_option = gui_FindWidget("input_smoke_option_1")
 accept_button = gui_FindWidget("input_smoke_accept")

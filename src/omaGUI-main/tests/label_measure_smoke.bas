@@ -3,7 +3,15 @@
     File: label_measure_smoke.bas
     Purpose: Verify measured label dimensions and opt-in fixed borders.
     Responsibilities: Check layout against glyph metrics and independent pixels.
-    This file intentionally does NOT contain application-specific sizing rules.
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
+    This file intentionally does NOT contain: application-specific sizing rules.
 '/
 #lang "fb"
 #define OMAGUI_IMPLEMENTATION
@@ -20,7 +28,7 @@ End Sub
 ScreenControl FB.SET_DRIVER_NAME, "null"
 backend_Init 320, 180, 0
 gui_Init
-Dim As Widget Ptr labelWidget = label_Create("measured", "AB", 10, 10, RGB(255, 255, 255))
+Dim As Widget Ptr labelWidget = label_CreateWithColor("measured", "AB", 10, 10, RGB(255, 255, 255))
 test_Require(labelWidget <> 0, "label allocation")
 gui_AddWidget labelWidget
 labelWidget->w = 60: labelWidget->h = 40
@@ -38,7 +46,12 @@ test_Require(labelWidget->w = 60 AndAlso labelWidget->h = 40, "measurement never
 label_SetBorderStyle labelWidget, 1
 test_Require(label_GetTextSize(labelWidget, textWidth, textHeight) AndAlso _
     textWidth = glyphWidth + 4 AndAlso textHeight = fontHeight + 4, "border includes text inset")
-test_Require(label_SetBorderStyle(labelWidget, 2) = 0 AndAlso label_GetBorderStyle(labelWidget) = 1, "invalid border preserves state")
+test_Require(label_SetBorderStyle(labelWidget, LABEL_BORDER_DOUBLE) <> 0 AndAlso _
+    label_GetBorderStyle(labelWidget) = LABEL_BORDER_DOUBLE, "double-line border accepted")
+test_Require(label_GetTextSize(labelWidget, textWidth, textHeight) AndAlso _
+    textWidth = glyphWidth + 4 AndAlso textHeight = fontHeight + 4, "double-line border keeps a two-pixel inset")
+test_Require(label_SetBorderStyle(labelWidget, 3) = 0 AndAlso _
+    label_GetBorderStyle(labelWidget) = LABEL_BORDER_DOUBLE, "invalid border preserves state")
 Dim As Widget otherWidget
 Dim As Integer otherData
 otherWidget.data = @otherData
@@ -48,17 +61,30 @@ test_Require(label_GetTextSize(0, textWidth, textHeight) = 0, "null rejected")
 label_SetText labelWidget, "AB" & Chr(13, 10) & "CD"
 test_Require(label_GetTextSize(labelWidget, textWidth, textHeight) AndAlso _
     textHeight = 2 * fontHeight + 2 + 4, "explicit paragraphs use renderer line spacing")
+label_SetBorderStyle labelWidget, LABEL_BORDER_SINGLE
 backend_Clear RGB(0, 0, 0)
 label_Render labelWidget
 backend_Rect 170, 10, 60, 40, RGB(0, 0, 100), -1
-backend_Rect 170, 10, 60, 40, theme_GetColor(GUI_COLOR_BORDER), 0
+backend_Rect 170, 10, 60, 40, _
+    theme_GetClassicColor(GUI_CLASSIC_COLOR_WINDOW_FRAME), 0
 backend_PrintFont 172, 12, RGB(255, 255, 255), "AB", BACKEND_FONT_DEFAULT
 backend_PrintFont 172, 12 + fontHeight + 2, RGB(255, 255, 255), "CD", BACKEND_FONT_DEFAULT
 For y As Integer = 0 To 179
     For x As Integer = 0 To 159
         test_Require(Point(x, y) = Point(x + 160, y), "border and paragraph pixels match independent reference")
-    Next x
+Next x
 Next y
+label_SetBorderStyle labelWidget, LABEL_BORDER_DOUBLE
+backend_Clear RGB(0, 0, 0)
+label_Render labelWidget
+Dim As ULong border_color = _
+    theme_GetClassicColor(GUI_CLASSIC_COLOR_WINDOW_FRAME)
+test_Require((Point(10, 10) And &hFFFFFF) = (border_color And &hFFFFFF) AndAlso _
+    (Point(11, 11) And &hFFFFFF) = (border_color And &hFFFFFF), _
+    "double-line border renders both edges")
+test_Require((Point(67, 47) And &hFFFFFF) = _
+    (RGB(0, 0, 100) And &hFFFFFF), _
+    "double-line border retains its client background")
 label_SetText labelWidget, "AB AB"
 label_SetWordWrap labelWidget, glyphWidth + 4
 test_Require(label_GetRenderedLineCount(labelWidget) = 2, "wrapping excludes border insets")

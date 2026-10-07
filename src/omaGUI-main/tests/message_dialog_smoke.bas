@@ -3,7 +3,15 @@
     File: message_dialog_smoke.bas
     Purpose: verify portable message layout, choices, and failed construction.
     Responsibilities: exercise public factories, modal input, and tree cleanup.
-    This file intentionally does NOT contain operating-system dialog calls.
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
+    This file intentionally does NOT contain: operating-system dialog calls.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY
@@ -34,6 +42,7 @@ options.icon_kind = CONFIRM_ICON_WARNING
 options.default_choice = 1
 root = confirmdialog_CreateChoicesEx("wrapped", "Import", messageText, 12, 12, options, "Retry", 4, "Cancel", 2, "", 0, 2)
 Require root <> 0, __LINE__
+Require gui_IsWidgetRegistered(root) AndAlso gui_IsModalOpen(), __LINE__
 gui_AddWidget root
 actionButton = confirmdialog_GetActionButton(root, 1)
 Require actionButton <> 0, __LINE__

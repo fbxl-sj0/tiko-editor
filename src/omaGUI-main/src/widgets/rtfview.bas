@@ -1085,8 +1085,11 @@ Private Function rtfview_ParsePlainText( _
             ' File readers may retain the conventional trailing NUL byte.
             Continue While
         Case Else
-            If rtfview_AppendCodePoint(d, parserState, characterCode) = 0 _
-                Then Return 0
+            ' File readers may retain a trailing NUL; it has no display glyph.
+            If characterCode <> 0 Then
+                If rtfview_AppendCodePoint(d, parserState, characterCode) = 0 _
+                    Then Return 0
+            End If
         End Select
     Wend
 

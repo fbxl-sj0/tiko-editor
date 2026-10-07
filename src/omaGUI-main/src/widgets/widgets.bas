@@ -4,9 +4,6 @@
 
     File: widgets.bas
 
-    Targets: FreeBASIC fb dialect; the including application selects the native backend.
-    Module API: Implements widgets.bi; declarations there define the interface.
-
     Purpose:
         Manage widget registration, hierarchy, input, drawing, and layout.
 
@@ -27,6 +24,14 @@
         - dispatch widget updates and rendering in registry order
         - cancel private input state when controls become ineligible
         - tolerate callbacks which remove or replace their own widget tree
+
+    Targets:
+
+        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+
+    Module API:
+
+        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
         - individual widget behavior or appearance
@@ -278,6 +283,8 @@ End Function
 
 Private Sub gui_AppendWidget(ByVal w As Widget Ptr)
     If w = 0 Then Exit Sub
+    ' Never link one widget pointer into the registry more than once.
+    If gui_IsRegisteredWidget(w) <> 0 Then Exit Sub
     ' Registering a hidden popup changes no pixels. Its first visible frame
     ' supplies damage through retained observation or conservative repainting.
     If w->visible <> 0 Then gui_InvalidateAll
@@ -317,6 +324,7 @@ Sub gui_AddWidget(ByVal w As Widget Ptr)
     Dim As Integer suffix
 
     If w = 0 Then Exit Sub
+    If gui_IsRegisteredWidget(w) <> 0 Then Exit Sub
 
     /'
         Names are public lookup keys. Preserve the original manager contract

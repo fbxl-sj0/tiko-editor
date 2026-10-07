@@ -16,6 +16,14 @@
         - exercise cancel, open, and save results through button input
         - verify removing a completed dialog clears modal state
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - platform-native file dialogs
@@ -68,10 +76,19 @@ input_ResetForTest()
 dialogWidget = filedialog_CreateAtPath( _
     "file_dialog_cancel", FILE_DIALOG_TEST_X, FILE_DIALOG_TEST_Y, CurDir _
 )
+If dialogWidget = 0 Then
+    fileDialogTest_Fail "open dialog was not created", 1
+End If
+If gui_IsWidgetRegistered(dialogWidget) = 0 Then
+    fileDialogTest_Fail "factory did not register the modal root", 14
+End If
 gui_AddWidget dialogWidget
+If dialogWidget->name <> "file_dialog_cancel" Then
+    fileDialogTest_Fail "adding an existing root registered it twice", 15
+End If
 gui_UpdateAll()
 
-If dialogWidget = 0 OrElse gui_IsModalOpen() = 0 Then
+If gui_IsModalOpen() = 0 Then
     fileDialogTest_Fail "open dialog was not created as modal", 1
 End If
 

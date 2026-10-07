@@ -15,6 +15,14 @@
         - expose caller-selected values for one to three action buttons
         - reject an invalid empty primary choice
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - application-specific message-box policy
@@ -43,7 +51,10 @@ Dim As Widget Ptr dialogWidget = confirmdialog_Create( _
     "confirm_smoke", "Confirm", "Discard changes?", 70, 70, "Discard" _
 )
 confirmSmoke_Require dialogWidget <> 0, __LINE__
+confirmSmoke_Require gui_IsWidgetRegistered(dialogWidget) AndAlso _
+    gui_IsModalOpen(), __LINE__
 gui_AddWidget dialogWidget
+confirmSmoke_Require dialogWidget->name = "confirm_smoke", __LINE__
 confirmSmoke_Require gui_FindWidget("confirm_smoke_confirm") <> 0 AndAlso _
     gui_FindWidget("confirm_smoke_cancel") <> 0, __LINE__
 button_Activate gui_FindWidget("confirm_smoke_cancel")
@@ -54,6 +65,8 @@ dialogWidget = confirmdialog_Create( _
     "confirm_default_smoke", "Confirm", "Discard changes?", 70, 70, "Discard" _
 )
 confirmSmoke_Require dialogWidget <> 0, __LINE__
+confirmSmoke_Require gui_IsWidgetRegistered(dialogWidget) AndAlso _
+    gui_IsModalOpen(), __LINE__
 gui_AddWidget dialogWidget
 input_ResetForTest
 input_MockKeyPress KEY_RETURN
@@ -66,6 +79,8 @@ dialogWidget = confirmdialog_CreateChoices( _
     "Yes", 6, "No", 7, "Cancel", 2, 2 _
 )
 confirmSmoke_Require dialogWidget <> 0, __LINE__
+confirmSmoke_Require gui_IsWidgetRegistered(dialogWidget) AndAlso _
+    gui_IsModalOpen(), __LINE__
 gui_AddWidget dialogWidget
 confirmSmoke_Require gui_FindWidget("choice_smoke_choice_0") <> 0 AndAlso _
     gui_FindWidget("choice_smoke_choice_1") <> 0 AndAlso _

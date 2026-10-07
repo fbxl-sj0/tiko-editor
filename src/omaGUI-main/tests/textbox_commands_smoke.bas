@@ -19,6 +19,14 @@
         - dispatch ordered key-release callbacks with modifier state
         - use only the bounded process-local clipboard backend
 
+    Targets:
+
+        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
+
+    Module API:
+
+        Standalone smoke-test entry point; this file exposes no reusable library API.
+
     This file intentionally does NOT contain:
 
         - application keyboard shortcut routing
@@ -39,6 +47,8 @@
 Dim Shared As Integer textboxCommands_key_up_count
 Dim Shared As Integer textboxCommands_last_key
 Dim Shared As Integer textboxCommands_last_modifiers
+Dim Shared As Integer textboxCommands_key_down_mode
+Dim Shared As Integer textboxCommands_key_down_count
 
 Private Sub textboxCommands_OnKeyUp( _
     ByVal control_widget As Widget Ptr, ByRef key_code As Integer, _
@@ -48,6 +58,24 @@ Private Sub textboxCommands_OnKeyUp( _
     textboxCommands_key_up_count += 1
     textboxCommands_last_key = key_code
     textboxCommands_last_modifiers = modifiers
+End Sub
+
+
+Private Sub textboxCommands_OnKeyDown( _
+    ByVal control_widget As Widget Ptr, ByRef key_code As Integer, _
+    ByRef modifiers As Integer _
+)
+    If control_widget = 0 Then Exit Sub
+    textboxCommands_key_down_count += 1
+    Select Case textboxCommands_key_down_mode
+    Case 1
+        If key_code = KEY_LEFT Then key_code = KEY_RIGHT
+    Case 2
+        If key_code = KEY_LEFT Then key_code = 0
+    Case 3
+        gui_UpdateAll
+        If key_code = KEY_LEFT Then key_code = KEY_RIGHT
+    End Select
 End Sub
 
 ' -------------------------------------------------------------------------
@@ -201,6 +229,58 @@ End If
 If textbox_SetKeyUpHandler(editor_widget, 0) = 0 Then
     Print "FAIL key-release callback clear"
     failure_count += 1
+End If
+input_ResetForTest
+
+' VBDOS KeyCode changes must reach ordinary TextBox navigation before its
+' default key handling, while a zero KeyCode must suppress that handling.
+textbox_SetText editor_widget, "abcd", -1
+textbox_SetCursorPosition editor_widget, 2
+textboxCommands_key_down_mode = 1
+If textbox_SetKeyDownHandler( _
+    editor_widget, @textboxCommands_OnKeyDown _
+) = 0 Then
+    Print "FAIL key-down callback setup"
+    failure_count += 1
+Else
+    input_MockKey KEY_LEFT, -1
+    gui_UpdateAll
+    If textbox_GetCursorPosition(editor_widget) <> 3 Then
+        Print "FAIL remapped key-down navigation"
+        failure_count += 1
+    End If
+    input_MockKey KEY_LEFT, 0
+    gui_UpdateAll
+
+    input_ResetForTest
+    textbox_SetCursorPosition editor_widget, 2
+    textboxCommands_key_down_mode = 2
+    input_MockKey KEY_LEFT, -1
+    gui_UpdateAll
+    If textbox_GetCursorPosition(editor_widget) <> 2 Then
+        Print "FAIL cancelled key-down navigation"
+        failure_count += 1
+    End If
+    input_MockKey KEY_LEFT, 0
+    gui_UpdateAll
+
+    input_ResetForTest
+    textbox_SetCursorPosition editor_widget, 2
+    textboxCommands_key_down_mode = 3
+    textboxCommands_key_down_count = 0
+    input_MockKey KEY_LEFT, -1
+    gui_UpdateAll
+    If textbox_GetCursorPosition(editor_widget) <> 3 OrElse _
+       textboxCommands_key_down_count <> 1 Then
+        Print "FAIL reentrant key-down dispatch"
+        failure_count += 1
+    End If
+    input_MockKey KEY_LEFT, 0
+    gui_UpdateAll
+    If textbox_SetKeyDownHandler(editor_widget, 0) = 0 Then
+        Print "FAIL key-down callback clear"
+        failure_count += 1
+    End If
 End If
 input_ResetForTest
 

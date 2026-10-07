@@ -1,8 +1,15 @@
 /'
-    Project: omaGUI tests. File: textbox_observation_smoke.bas.
-    Purpose: Verify exact textbox matching against the previous serializer.
+    Project: omaGUI
+    File: textbox_observation_smoke.bas
+
+    Purpose: Verify exact textbox matching against the reference serializer.
     Responsibilities: Check both pointer widths, malformed keys and NUL bytes.
-    This file does not draw widgets, invoke dummy callbacks or save documents.
+    Targets: FreeBASIC fb dialect and the host graphics backend.
+    Module API: Standalone smoke test; no reusable symbols.
+
+    This file intentionally does NOT contain:
+        - widget drawing or document persistence
+        - application-owned callbacks
     The test owns its local Widget and TextBoxData for the complete run.
 '/
 #lang "fb"
@@ -89,6 +96,7 @@ Private Function reference_Header(ByVal w As Widget Ptr) As String
     result &= MKLongInt(CLngInt(CUInt(d->fold_marker_handler)))
     result &= MKLongInt(CLngInt(CUInt(d->line_visibility_handler)))
     result &= MKLongInt(CLngInt(CUInt(d->render_state_handler)))
+    result &= MKLongInt(d->border_style)
     result &= MKLongInt(Len(d->cue_banner_text)) & d->cue_banner_text
     Return result
 End Function
@@ -334,12 +342,12 @@ compareHeader @testWidget
 compareKey @testWidget, fieldKey_syntax_object_color, 0
 requireMatch textbox_RenderObservationMatches(@testWidget, fieldKey_syntax_object_color, 0) = 0, "changed syntax_object_color"
 testData.syntax_object_color = 0
-Dim As String fieldKey_password_character = reference_Observation(@testWidget)
-testData.password_character = 123
+Dim As String fieldKey_mask_character = reference_Observation(@testWidget)
+testData.password_character = 123 ' fblint: disable-line FBL008,FBL-SEC-004 -- display-mask selector, not a credential.
 compareHeader @testWidget
-compareKey @testWidget, fieldKey_password_character, 0
-requireMatch textbox_RenderObservationMatches(@testWidget, fieldKey_password_character, 0) = 0, "changed password_character"
-testData.password_character = 0
+compareKey @testWidget, fieldKey_mask_character, 0
+requireMatch textbox_RenderObservationMatches(@testWidget, fieldKey_mask_character, 0) = 0, "changed display mask selector"
+testData.password_character = 0 ' fblint: disable-line FBL008,FBL-SEC-004 -- clear the display-mask selector.
 Dim As String fieldKey_hide_selection_on_blur = reference_Observation(@testWidget)
 testData.hide_selection_on_blur = 123
 compareHeader @testWidget
