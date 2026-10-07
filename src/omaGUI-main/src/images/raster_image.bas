@@ -517,10 +517,11 @@ Private Function rastergif_Decode( _
             Return 0
         End If
         For colorTableIndex = 0 To globalPaletteCount - 1
+            Dim As UByte globalPaletteRed = bytes(position + colorTableIndex * 3)
+            Dim As UByte globalPaletteGreen = bytes(position + colorTableIndex * 3 + 1)
+            Dim As UByte globalPaletteBlue = bytes(position + colorTableIndex * 3 + 2)
             globalPalette(colorTableIndex) = RGB( _
-                bytes(position + colorTableIndex * 3), _
-                bytes(position + colorTableIndex * 3 + 1), _
-                bytes(position + colorTableIndex * 3 + 2) _
+                globalPaletteRed, globalPaletteGreen, globalPaletteBlue _
             )
         Next colorTableIndex
         position += paletteByteCount
@@ -630,10 +631,11 @@ Private Function rastergif_Decode( _
                 End If
                 activePaletteCount = localPaletteCount
                 For colorTableIndex = 0 To localPaletteCount - 1
+                    Dim As UByte activePaletteRed = bytes(position + colorTableIndex * 3)
+                    Dim As UByte activePaletteGreen = bytes(position + colorTableIndex * 3 + 1)
+                    Dim As UByte activePaletteBlue = bytes(position + colorTableIndex * 3 + 2)
                     activePalette(colorTableIndex) = RGB( _
-                        bytes(position + colorTableIndex * 3), _
-                        bytes(position + colorTableIndex * 3 + 1), _
-                        bytes(position + colorTableIndex * 3 + 2) _
+                        activePaletteRed, activePaletteGreen, activePaletteBlue _
                     )
                 Next colorTableIndex
                 position += paletteByteCount

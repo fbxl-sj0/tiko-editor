@@ -101,7 +101,10 @@ Private Function rasterico_Decode( _
     For colorIndex As Long = 0 To CLng(colorCount) - 1
         Dim As LongInt offsetValue = _
             paletteOffset + CLngInt(colorIndex) * 4LL
-        paletteColors(colorIndex) = RGB(bytes(offsetValue + 2), bytes(offsetValue + 1), bytes(offsetValue))
+        Dim As UByte paletteRed = bytes(offsetValue + 2)
+        Dim As UByte paletteGreen = bytes(offsetValue + 1)
+        Dim As UByte paletteBlue = bytes(offsetValue)
+        paletteColors(colorIndex) = RGB(paletteRed, paletteGreen, paletteBlue)
     Next colorIndex
 
     imagePixels = backend_CreateImage(imageWidth, imageHeight, RGBA(0, 0, 0, 0), 32)
@@ -126,7 +129,10 @@ Private Function rasterico_Decode( _
             If bitCount = 24 Then
                 Dim As LongInt offsetValue = _
                     xorRow + CLngInt(columnIndex) * 3LL
-                pixelColor = RGB(bytes(offsetValue + 2), bytes(offsetValue + 1), bytes(offsetValue))
+                Dim As UByte pixelRed = bytes(offsetValue + 2)
+                Dim As UByte pixelGreen = bytes(offsetValue + 1)
+                Dim As UByte pixelBlue = bytes(offsetValue)
+                pixelColor = RGB(pixelRed, pixelGreen, pixelBlue)
             Else
                 Dim As Long bitOffset = columnIndex * bitCount
                 Dim As Long colorIndex = (bytes(xorRow + bitOffset \ 8) Shr _
