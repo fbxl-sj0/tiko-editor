@@ -337,6 +337,16 @@ Declare Function textbox_CountVisualLines( _
     ByVal textData As TextBoxData Ptr = 0, _
     ByVal buildRowIndex As Integer = 0 _
 ) As Integer
+Declare Function textbox_VisualLineAtPosition( _
+    ByRef textValue As Const String, _
+    ByVal position As Integer, _
+    ByVal wordwrap As Integer, _
+    ByVal contentWidth As Integer, _
+    ByRef lineStart As Integer, _
+    ByRef lineEnd As Integer, _
+    ByRef boundsFound As Integer, _
+    ByVal textData As TextBoxData Ptr _
+) As Integer
 Declare Function textbox_VisualLineForPosition( _
     ByRef textValue As Const String, _
     ByVal position As Integer, _
@@ -1890,13 +1900,33 @@ Private Function textbox_VisualLineForPosition( _
     ByVal contentWidth As Integer, _
     ByVal textData As TextBoxData Ptr _
 ) As Integer
-    Dim As Integer lineEnd
+    Dim As Integer lineStart, lineEnd, boundsFound
+    Return textbox_VisualLineAtPosition(textValue, position, wordwrap, _
+        contentWidth, lineStart, lineEnd, boundsFound, textData)
+End Function
+
+
+Private Function textbox_VisualLineAtPosition( _
+    ByRef textValue As Const String, _
+    ByVal position As Integer, _
+    ByVal wordwrap As Integer, _
+    ByVal contentWidth As Integer, _
+    ByRef lineStart As Integer, _
+    ByRef lineEnd As Integer, _
+    ByRef boundsFound As Integer, _
+    ByVal textData As TextBoxData Ptr _
+) As Integer
     Dim As Integer lineIndex
-    Dim As Integer lineStart
+    Dim As Integer nextStart, nextEnd
     Dim As Integer scanPosition
     Dim As Integer sourceLineNumber, sourceLineStart
     Dim As Integer rowLineNumber, rowLineStart
 
+    ' Return the row bounds from the same walk that locates the caret.
+    ' Callers may reuse them only while the measured layout is unchanged.
+    boundsFound = 0
+    lineStart = 0
+    lineEnd = 0
     position = textbox_ClampPosition(textValue, position)
 
     If wordwrap = 0 AndAlso textbox_CanRestoreRow(textData, textValue) <> 0 Then
@@ -1913,9 +1943,12 @@ Private Function textbox_VisualLineForPosition( _
 
     While textbox_NextVisibleVisualLine( _
         textValue, scanPosition, wordwrap, contentWidth, _
-        lineStart, lineEnd, textData, _
+        nextStart, nextEnd, textData, _
         sourceLineNumber, sourceLineStart, rowLineNumber, rowLineStart _
     )
+        lineStart = nextStart
+        lineEnd = nextEnd
+        boundsFound = -1
         If position <= lineEnd Then Return lineIndex
         lineIndex += 1
     Wend
@@ -2361,8 +2394,24 @@ Private Sub textbox_UpdateScrollMetrics( _
             metricsKey &= MKLongInt(textData->cursor_pos)
         End If
     End If
-    metricsKey &= displayText
-    Dim As Integer retainedRowMetrics = textbox_TryUpdateLineMetrics(textData, displayText, metricsKey)
+    ' Most calls only confirm the existing layout. Compare the short header
+    ' and borrowed document separately before allocating another full key.
+    ' Exact bytes still detect same-length edits made through legacy fields.
+    Dim As Integer unchangedMetrics
+    Dim As Integer retainedRowMetrics
+    Dim As Integer headerLength = Len(metricsKey)
+    If textData->metrics_valid <> 0 AndAlso _
+       Len(textData->metrics_key) >= headerLength AndAlso _
+       Len(textData->metrics_key) - headerLength = Len(displayText) Then
+        If oma_BytesEqual(StrPtr(textData->metrics_key), StrPtr(metricsKey), headerLength) <> 0 AndAlso _
+           oma_BytesEqual(StrPtr(textData->metrics_key) + headerLength, StrPtr(displayText), Len(displayText)) <> 0 Then _
+            unchangedMetrics = -1
+    End If
+    If unchangedMetrics = 0 Then
+        metricsKey &= displayText
+        retainedRowMetrics = textbox_TryUpdateLineMetrics(textData, displayText, metricsKey)
+        If retainedRowMetrics <> 0 Then unchangedMetrics = -1
+    End If
     ' With exact source/layout state, viewport_dirty requests caret placement,
     ' not another full measurement. Unmanaged opt-in callbacks still use that
     ' flag as their explicit invalidation contract.
@@ -2373,7 +2422,7 @@ Private Sub textbox_UpdateScrollMetrics( _
        (textData->line_visibility_handler = 0 OrElse _
         textData->metrics_cache_callbacks <> 0 OrElse _
         textData->metrics_state_handler <> 0) AndAlso _
-       textData->metrics_key = metricsKey Then
+       unchangedMetrics <> 0 Then
         maximumLineWidth = textData->metrics_maximum_width
         textData->line_number_gutter_width = textData->metrics_gutter_width
         textData->total_visual_lines = textData->metrics_total_lines
@@ -2382,6 +2431,9 @@ Private Sub textbox_UpdateScrollMetrics( _
         contentWidth = textbox_ContentWidth(w, textData)
         visibleLines = textbox_VisibleLineCount(w, textData)
     Else
+        ' An unmanaged callback can require a fresh measurement even when its
+        ' key bytes match. The retained snapshot must still contain the source.
+        If unchangedMetrics <> 0 AndAlso retainedRowMetrics = 0 Then metricsKey &= displayText
         textData->metrics_row_source_length = Len(displayText)
         textData->metrics_row_visibility_key = visibilityKey
         textData->metrics_row_visibility_handler = textData->line_visibility_handler
@@ -3217,6 +3269,7 @@ Private Sub textbox_EnsureCursorVisible(ByVal w As Widget Ptr, ByVal textData As
     Dim cursorLine As Integer
     Dim cursorLineEnd As Integer
     Dim cursorLineStart As Integer
+    Dim cursorBoundsFound As Integer
     Dim visibleWidth As Integer
     Dim visibleLines As Integer
 
@@ -3232,29 +3285,41 @@ Private Sub textbox_EnsureCursorVisible(ByVal w As Widget Ptr, ByVal textData As
 
     textbox_UpdateScrollMetrics w, textData
     visibleWidth = textbox_ContentWidth(w, textData)
-    cursorLine = textbox_VisualLineForPosition( _
+    cursorLine = textbox_VisualLineAtPosition( _
         displayText, textData->cursor_pos, _
-        textData->wordwrap, visibleWidth, textData _
+        textData->wordwrap, visibleWidth, cursorLineStart, cursorLineEnd, _
+        cursorBoundsFound, textData _
     )
     visibleLines = textbox_VisibleLineCount(w, textData)
 
+    Dim As Integer previousScroll = textData->v_scroll
     If textData->v_scroll < 0 Then textData->v_scroll = 0
     If cursorLine < textData->v_scroll Then textData->v_scroll = cursorLine
     If cursorLine >= textData->v_scroll + visibleLines Then textData->v_scroll = cursorLine - visibleLines + 1
-    textbox_UpdateScrollMetrics w, textData
+    ' The first measurement already synchronized the bars. Revisit it only
+    ' after moving the viewport, or for unmanaged visibility callbacks whose
+    ' external layout state cannot be proved unchanged within this GUI call.
+    If textData->v_scroll <> previousScroll OrElse _
+       (textData->line_visibility_handler <> 0 AndAlso _
+        textData->metrics_state_handler = 0) Then
+        textbox_UpdateScrollMetrics w, textData
+        cursorBoundsFound = 0
+    End If
 
     If textData->wordwrap <> 0 Then
         textData->scroll_offset = 0
         Exit Sub
     End If
 
-    If textbox_VisualLineBounds( _
-        displayText, cursorLine, textData->wordwrap, visibleWidth, _
-        cursorLineStart, cursorLineEnd, textData _
-    ) = 0 Then
-        cursorLineStart = textbox_LineStart( _
-            displayText, textData->cursor_pos _
-        )
+    If cursorBoundsFound = 0 Then
+        If textbox_VisualLineBounds( _
+            displayText, cursorLine, textData->wordwrap, visibleWidth, _
+            cursorLineStart, cursorLineEnd, textData _
+        ) = 0 Then
+            cursorLineStart = textbox_LineStart( _
+                displayText, textData->cursor_pos _
+            )
+        End If
     End If
     cursorColumnWidth = textbox_TextWidth(textData, _
         Mid( _
@@ -4925,7 +4990,7 @@ Function textbox_Create( _
 End Function
 
 
-Function textbox_GetRenderObservation(ByVal w As Widget Ptr) As String
+Private Function textbox_RenderObservationHeader(ByVal w As Widget Ptr) As String
     If w = 0 OrElse w->data = 0 Then Return ""
     Dim As TextBoxData Ptr d = Cast(TextBoxData Ptr, w->data)
     Dim As String result
@@ -5003,9 +5068,11 @@ Function textbox_GetRenderObservation(ByVal w As Widget Ptr) As String
     result &= MKLongInt(CLngInt(CUInt(d->line_visibility_handler)))
     result &= MKLongInt(CLngInt(CUInt(d->render_state_handler)))
     result &= MKLongInt(Len(d->cue_banner_text)) & d->cue_banner_text
-    ' Exact source equality also detects supported legacy direct writes which
-    ' did not advance change_serial. No rendering is required to compare it.
-    result &= MKLongInt(Len(d->text)) & d->text
+    Return result
+End Function
+
+Private Function textbox_RenderObservationMovement(ByVal d As TextBoxData Ptr) As String
+    Dim As String result
     ' The length locates the movement fields without parsing the source text.
     result &= MKLongInt(Len(d->text))
     ' The final six 8-byte fields describe caret and selection movement.
@@ -5017,8 +5084,42 @@ Function textbox_GetRenderObservation(ByVal w As Widget Ptr) As String
     result &= MKLongInt(d->sel_start_virtual_space)
     result &= MKLongInt(d->sel_end_virtual_space)
     result &= Chr(IIf(d->active <> 0 AndAlso d->caret_visible <> 0 AndAlso _
-        Int(Timer * 2) Mod 2 = 0, 1, 0))
+        gui_CaretBlinkVisible(Timer) <> 0, 1, 0))
     Return result
+End Function
+
+Function textbox_GetRenderObservation(ByVal w As Widget Ptr) As String
+    If w = 0 OrElse w->data = 0 Then Return ""
+    Dim As TextBoxData Ptr d = w->data
+    ' Keep exact source bytes in changed observations, including legacy writes
+    ' which did not advance change_serial. The matcher borrows them on idle frames.
+    Return textbox_RenderObservationHeader(w) & MKLongInt(Len(d->text)) & _
+        d->text & textbox_RenderObservationMovement(d)
+End Function
+
+Function textbox_RenderObservationMatches(ByVal w As Widget Ptr, _
+    ByRef previousKey As Const String, ByVal observationOffset As Integer) As Integer
+    If w = 0 OrElse w->data = 0 Then Return 0
+    If observationOffset < 0 OrElse observationOffset > Len(previousKey) Then Return 0
+    Dim As TextBoxData Ptr d = w->data
+    Dim As String header = textbox_RenderObservationHeader(w)
+    ' Layout: header, source length (8), exact source bytes, movement (57).
+    ' Subtract before adding offsets, so malformed retained keys cannot wrap.
+    Const fixedBytes As Integer = 65
+    Dim As Integer available = Len(previousKey) - observationOffset
+    If available < fixedBytes OrElse Len(header) > available - fixedBytes Then Return 0
+    If Len(d->text) <> available - fixedBytes - Len(header) Then Return 0
+    Dim As Const UByte Ptr retainedBytes = StrPtr(previousKey) + observationOffset
+    If oma_BytesEqual(retainedBytes, StrPtr(header), Len(header)) = 0 Then Return 0
+    Dim As String sourceLength = MKLongInt(Len(d->text))
+    retainedBytes += Len(header)
+    If oma_BytesEqual(retainedBytes, StrPtr(sourceLength), 8) = 0 Then Return 0
+    retainedBytes += 8
+    ' Exact equality catches same-length legacy writes without a serial bump.
+    ' Borrow the live document only for this GUI-thread call; never retain it.
+    If oma_BytesEqual(retainedBytes, StrPtr(d->text), Len(d->text)) = 0 Then Return 0
+    Dim As String movement = textbox_RenderObservationMovement(d)
+    Return oma_BytesEqual(retainedBytes + Len(d->text), StrPtr(movement), Len(movement))
 End Function
 
 
@@ -5347,7 +5448,7 @@ Sub textbox_Render(ByVal w As Widget Ptr)
        cursorLine >= textData->v_scroll AndAlso _
        (textData->multiline = 0 OrElse cursorY <= w->ay + w->h - _
         textbox_ScaledPadding(textData, TEXTBOX_TEXT_BOTTOM_PADDING)) AndAlso _
-       Int(Timer * 2) Mod 2 = 0 Then
+       gui_CaretBlinkVisible(Timer) <> 0 Then
         Dim As ULong caretColor = foregroundColor
         If textData->caret_color <> TEXTBOX_WIDGET_COLOR_DEFAULT Then _
             caretColor = textData->caret_color

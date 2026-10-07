@@ -32,6 +32,36 @@ Sub gui_InvalidateAll()
     gui_DamageFull = -1
 End Sub
 
+Sub gui_SetRenderObservationMatcher(ByVal w As Widget Ptr, _
+    ByVal matchHandler As Function(ByVal As Widget Ptr, ByRef As Const String, _
+        ByVal As Integer) As Integer)
+    If w = 0 Then Exit Sub
+    ' A matcher is valid only for the observer it was written to qualify.
+    ' Both callbacks are read-only GUI-thread calls and may not alter registry
+    ' membership. Retained bytes remain owned by the manager until they return.
+    w->render_observation_match = matchHandler
+    w->render_match_owner = w->render_observation
+    w->retained_valid = 0
+End Sub
+
+Sub gui_SetRenderBoundsHandler(ByVal w As Widget Ptr, _
+    ByVal boundsHandler As Function(ByVal As Widget Ptr, ByRef As Integer, _
+        ByRef As Integer, ByRef As Integer, ByRef As Integer) As Integer)
+    If w = 0 Then Exit Sub
+    w->render_bounds = boundsHandler
+    w->render_bounds_owner = w->render
+    w->retained_valid = 0
+End Sub
+
+Sub gui_SetOpaqueRenderBoundsHandler(ByVal w As Widget Ptr, _
+    ByVal boundsHandler As Function(ByVal As Widget Ptr, ByRef As Integer, _
+        ByRef As Integer, ByRef As Integer, ByRef As Integer) As Integer)
+    If w = 0 Then Exit Sub
+    ' Bind to this painter only. Replacing it declines the opacity contract.
+    w->render_opaque_bounds = boundsHandler
+    w->render_opaque_owner = w->render
+End Sub
+
 Sub gui_InvalidateRect(ByVal x As Integer, ByVal y As Integer, _
     ByVal widthValue As Integer, ByVal heightValue As Integer)
     Dim As Integer screenWidth, screenHeight
@@ -61,12 +91,26 @@ Sub gui_InvalidateRect(ByVal x As Integer, ByVal y As Integer, _
         Dim As GUI_DamageRect Ptr r = @gui_Damage(index)
         If x < r->x + r->w AndAlso y < r->y + r->h AndAlso _
            x + widthValue > r->x AndAlso y + heightValue > r->y Then
+            Dim As LongInt mergedLeft = x
+            Dim As LongInt mergedTop = y
             rightEdge = x + widthValue
             bottomEdge = y + heightValue
-            If r->x < x Then x = r->x
-            If r->y < y Then y = r->y
+            If r->x < mergedLeft Then mergedLeft = r->x
+            If r->y < mergedTop Then mergedTop = r->y
             If r->x + r->w > rightEdge Then rightEdge = r->x + r->w
             If r->y + r->h > bottomEdge Then bottomEdge = r->y + r->h
+            ' Crossing thin strips form an L shape. Their bounding rectangle
+            ' can cover most of an editor even though very few pixels changed.
+            ' Keep both regions when merging would increase the painted area.
+            Dim As LongInt mergedArea = (rightEdge - mergedLeft) * (bottomEdge - mergedTop)
+            Dim As LongInt firstArea = CLngInt(widthValue) * heightValue
+            Dim As LongInt secondArea = CLngInt(r->w) * r->h
+            If mergedArea - firstArea > secondArea Then
+                index += 1
+                Continue While
+            End If
+            x = CInt(mergedLeft)
+            y = CInt(mergedTop)
             widthValue = rightEdge - x
             heightValue = bottomEdge - y
             gui_DamageCount -= 1
@@ -156,15 +200,25 @@ Function gui_PrepareRetainedFrame() As Integer
     Dim As Widget Ptr w = widget_list_head
     While w <> 0
         Dim As String key
+        Dim As Integer observationMatched, observationOffset
+        Dim As Integer paintX = w->ax
+        Dim As Integer paintY = w->ay
+        Dim As Integer paintWidth = w->w
+        Dim As Integer paintHeight = w->h
+        Dim As Integer boundsValid
         If w->evis <> 0 Then
+            boundsValid = gui_GetRetainedPaintBounds(w, paintX, paintY, paintWidth, paintHeight)
+            If boundsValid = 0 Then
+                paintX = w->ax: paintY = w->ay: paintWidth = w->w: paintHeight = w->h
+            End If
             ' Legacy renderers may animate or draw decorations outside their
             ' nominal bounds. Without an observation contract, preserve a
             ' complete scene repaint rather than leave stale pixels behind.
             If w->render <> 0 AndAlso w->render_observation = 0 Then gui_InvalidateAll
             ' Native-style windows can draw shadows outside their own bounds.
-            ' Keep full repainting while one is visible until it supplies an
-            ' explicit damage contract for those decorations.
-            If w->is_window <> 0 Then gui_InvalidateAll
+            ' A painter with a validated footprint can bound those decorations;
+            ' other windows retain their complete scene repaint.
+            If w->is_window <> 0 AndAlso boundsValid = 0 Then gui_InvalidateAll
             Dim As Integer clipX, clipY, clipWidth, clipHeight
             gui_GetWidgetRenderClip w, clipX, clipY, clipWidth, clipHeight
             key = MKLongInt(clipX) & MKLongInt(clipY) & _
@@ -187,19 +241,40 @@ Function gui_PrepareRetainedFrame() As Integer
             ' rejects a direct pointer-to-LongInt cast; cache fields stay 8 bytes.
             key &= MKLongInt(w->een) & MKLongInt(w->has_focus) & _
                 MKLongInt(gui_KeyboardFocusVisible) & MKLongInt(CLngInt(CUInt(w->render)))
-            If w->render_observation <> 0 Then key &= w->render_observation(w)
+            observationOffset = Len(key)
+            If w->render_observation <> 0 Then
+                If w->retained_valid <> 0 AndAlso _
+                   w->render_observation_match <> 0 AndAlso _
+                   w->render_match_owner = w->render_observation AndAlso _
+                   w->retained_visible = w->evis AndAlso _
+                   w->retained_x = w->ax AndAlso w->retained_y = w->ay AndAlso _
+                   w->retained_w = w->w AndAlso w->retained_h = w->h AndAlso _
+                   observationOffset = w->retained_observation_offset AndAlso _
+                   observationOffset <= Len(w->retained_key) Then
+                    If oma_BytesEqual(StrPtr(key), StrPtr(w->retained_key), observationOffset) <> 0 Then _
+                        observationMatched = w->render_observation_match(w, w->retained_key, observationOffset)
+                End If
+                If observationMatched = 0 Then key &= w->render_observation(w)
+            End If
         End If
         Dim As Integer changed = IIf(w->retained_valid = 0 OrElse _
             w->retained_visible <> w->evis OrElse w->retained_x <> w->ax OrElse _
             w->retained_y <> w->ay OrElse w->retained_w <> w->w OrElse _
-            w->retained_h <> w->h OrElse key <> w->retained_key OrElse _
+            w->retained_h <> w->h OrElse _
+            w->retained_bounds_valid <> boundsValid OrElse _
+            (w->evis <> 0 AndAlso (w->retained_paint_x <> paintX OrElse _
+                w->retained_paint_y <> paintY OrElse w->retained_paint_w <> paintWidth OrElse _
+                w->retained_paint_h <> paintHeight)) OrElse _
+            (observationMatched = 0 AndAlso key <> w->retained_key) OrElse _
             (w->evis <> 0 AndAlso w->render_observation = 0), -1, 0)
         If changed <> 0 Then
             Dim As Integer narrowDamage, damageX, damageY, damageWidth, damageHeight
-            If w->render_damage <> 0 AndAlso w->retained_valid <> 0 AndAlso _
+            If w->render_damage <> 0 AndAlso observationMatched = 0 AndAlso w->retained_valid <> 0 AndAlso _
                w->evis <> 0 AndAlso w->retained_visible = w->evis AndAlso _
                w->retained_x = w->ax AndAlso w->retained_y = w->ay AndAlso _
-               w->retained_w = w->w AndAlso w->retained_h = w->h Then
+               w->retained_w = w->w AndAlso w->retained_h = w->h AndAlso _
+               w->retained_paint_x = paintX AndAlso w->retained_paint_y = paintY AndAlso _
+               w->retained_paint_w = paintWidth AndAlso w->retained_paint_h = paintHeight Then
                 narrowDamage = w->render_damage(w, w->retained_key, key, _
                     damageX, damageY, damageWidth, damageHeight)
             End If
@@ -207,16 +282,22 @@ Function gui_PrepareRetainedFrame() As Integer
                 gui_InvalidateRect damageX, damageY, damageWidth, damageHeight
             Else
                 If w->retained_visible <> 0 Then gui_InvalidateRect _
-                    w->retained_x, w->retained_y, w->retained_w, w->retained_h
-                If w->evis <> 0 Then gui_InvalidateRect w->ax, w->ay, w->w, w->h
+                    w->retained_paint_x, w->retained_paint_y, w->retained_paint_w, w->retained_paint_h
+                If w->evis <> 0 Then gui_InvalidateRect paintX, paintY, paintWidth, paintHeight
             End If
             ' The retained key already matches. Do not copy a large key every idle frame.
-            w->retained_key = key
+            If observationMatched = 0 Then
+                w->retained_key = key
+                w->retained_observation_offset = observationOffset
+            End If
         End If
         w->retained_valid = -1
         w->retained_visible = w->evis
         w->retained_x = w->ax: w->retained_y = w->ay
         w->retained_w = w->w: w->retained_h = w->h
+        w->retained_bounds_valid = boundsValid
+        w->retained_paint_x = paintX: w->retained_paint_y = paintY
+        w->retained_paint_w = paintWidth: w->retained_paint_h = paintHeight
         w = w->next_widget
     Wend
     If gui_DamageFull <> 0 Then

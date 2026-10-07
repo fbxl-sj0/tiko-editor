@@ -334,6 +334,8 @@ Declare Sub textbox_Render(ByVal w As Widget Ptr)
 ' Applications using visual callbacks must append their external model state
 ' before assigning this observation to Widget.render_observation.
 Declare Function textbox_GetRenderObservation(ByVal w As Widget Ptr) As String
+Declare Function textbox_RenderObservationMatches(ByVal w As Widget Ptr, _
+    ByRef previousKey As Const String, ByVal observationOffset As Integer) As Integer
 Declare Function textbox_GetRenderDamage(ByVal w As Widget Ptr, _
     ByRef previousKey As Const String, ByRef nextKey As Const String, _
     ByRef x As Integer, ByRef y As Integer, _
