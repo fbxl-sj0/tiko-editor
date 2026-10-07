@@ -2147,7 +2147,7 @@ Private Dim Shared As Integer textbox_ProfileMetricsFull, textbox_ProfileMetrics
 Private Const TEXTBOX_METRICS_COMPARE_BLOCK_BYTES As Integer = 4096
 
 Private Function textbox_MatchingPrefixLength( _
-    ByVal oldBytes As UByte Ptr, ByVal newBytes As UByte Ptr, _
+    ByVal oldBytes As Const UByte Ptr, ByVal newBytes As Const UByte Ptr, _
     ByVal compareLength As Integer _
 ) As Integer
     Dim As Integer prefixLength
@@ -2177,7 +2177,7 @@ Private Function textbox_MatchingPrefixLength( _
 End Function
 
 Private Function textbox_MatchingSuffixLength( _
-    ByVal oldBytes As UByte Ptr, ByVal newBytes As UByte Ptr, _
+    ByVal oldBytes As Const UByte Ptr, ByVal newBytes As Const UByte Ptr, _
     ByVal oldLength As Integer, ByVal newLength As Integer, _
     ByVal compareLength As Integer, ByVal prefixLength As Integer _
 ) As Integer
@@ -2212,7 +2212,7 @@ Private Function textbox_MatchingSuffixLength( _
 End Function
 
 Private Function textbox_ChangedRangeHasNoNewlines( _
-    ByVal oldBytes As UByte Ptr, ByVal newBytes As UByte Ptr, _
+    ByVal oldBytes As Const UByte Ptr, ByVal newBytes As Const UByte Ptr, _
     ByVal prefixLength As Integer, ByVal oldChangedEnd As Integer, _
     ByVal newChangedEnd As Integer _
 ) As Integer
@@ -2228,7 +2228,7 @@ Private Function textbox_ChangedRangeHasNoNewlines( _
 End Function
 
 Private Function textbox_ChangedLineIsVisible( _
-    ByVal textData As TextBoxData Ptr, ByVal oldBytes As UByte Ptr, _
+    ByVal textData As TextBoxData Ptr, ByVal oldBytes As Const UByte Ptr, _
     ByVal lineStart As Integer _
 ) As Integer
     If textData->line_visibility_handler = 0 Then Return -1
@@ -2277,21 +2277,21 @@ Private Function textbox_TryUpdateLineMetrics(ByVal textData As TextBoxData Ptr,
     Dim As Integer newHeader = Len(metricsKey) - newLength
     If oldLength < 4096 OrElse newLength < 4096 OrElse oldHeader < 0 OrElse oldHeader <> newHeader Then Return 0
     If oma_BytesEqual(StrPtr(textData->metrics_key), StrPtr(metricsKey), oldHeader) = 0 Then Return 0
-    Dim As UByte Ptr oldBytes = StrPtr(textData->metrics_key) + oldHeader
+    Dim As Const UByte Ptr oldBytes = StrPtr(textData->metrics_key) + oldHeader
     Dim As Const UByte Ptr newBytes = StrPtr(displayText)
     Dim As Integer minimumLength = IIf(oldLength < newLength, oldLength, newLength)
     Dim As Integer prefixLength = textbox_MatchingPrefixLength( _
-        oldBytes, Cast(UByte Ptr, newBytes), minimumLength _
+        oldBytes, newBytes, minimumLength _
     )
     Dim As Integer suffixLength = textbox_MatchingSuffixLength( _
-        oldBytes, Cast(UByte Ptr, newBytes), oldLength, newLength, _
+        oldBytes, newBytes, oldLength, newLength, _
         minimumLength, prefixLength _
     )
     Dim As Integer oldChangedEnd = oldLength - suffixLength
     Dim As Integer newChangedEnd = newLength - suffixLength
     If prefixLength = oldLength AndAlso prefixLength = newLength Then Return 0
     If textbox_ChangedRangeHasNoNewlines( _
-        oldBytes, Cast(UByte Ptr, newBytes), prefixLength, _
+        oldBytes, newBytes, prefixLength, _
         oldChangedEnd, newChangedEnd _
     ) = 0 Then Return 0
     Dim As Integer lineStart = prefixLength
