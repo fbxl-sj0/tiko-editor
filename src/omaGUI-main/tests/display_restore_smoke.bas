@@ -3,15 +3,7 @@
     File: display_restore_smoke.bas
     Purpose: Verify display restoration after direct gfxlib use.
     Responsibilities: Check modes, pages, clipping, theme, widgets, and input.
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
-    This file intentionally does NOT contain: VBDOS form or sample algorithms.
+    This file intentionally does NOT contain VBDOS form or sample algorithms.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY

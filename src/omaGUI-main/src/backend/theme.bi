@@ -4,6 +4,9 @@
 
     File: theme.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for theme.
+
     Purpose:
 
         Declare the shared classic widget color theme.
@@ -15,14 +18,6 @@
         - expose portable classic shadow and three-dimensional effects
         - expose independent classic menu, border, command, and scrollbar colors
         - expose semantic color lookup for standard widgets
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the theme component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

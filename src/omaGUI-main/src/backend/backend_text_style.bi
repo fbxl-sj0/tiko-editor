@@ -1,20 +1,18 @@
 /'
     Project: omaGUI
     File: backend_text_style.bi
+
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for backend_text_style.
     Purpose: Render optional styles using the embedded bitmap glyph coverage.
     Responsibilities:
         - synthesize bold and italic without platform font dependencies
         - draw underline and strikeout within the existing line height
         - preserve advance widths, clipping, and the ordinary rendering path
-    Targets:
 
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
+    This file intentionally does NOT contain:
 
-    Module API:
-
-        Declarations for the backend_text_style component in the omaGUI include graph.
-
-    This file intentionally does NOT contain: widget state or text layout.
+        - widget state or text layout
     Private implementation include for backend_gfxlib.bas. Drawing stays on the
     GUI thread and borrows immutable glyph tables from backend_FontGlyph.
 '/

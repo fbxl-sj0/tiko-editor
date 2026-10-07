@@ -19,14 +19,6 @@
         - preserve selection through Undo
         - keep long-line cursors horizontally visible and clipped
 
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
 
         - JRPG script compilation
@@ -60,9 +52,9 @@ Const TEXTBOX_INTERACTION_EXIT_SCREEN As Integer = 7
 Const TEXTBOX_INTERACTION_SOURCE As String = _
     "alpha beta" & !"\n" & "second line" & !"\n" & "third"
 
-' Failure cleanup is shared with the assertions below.
+' Failure cleanup is shared with the assertions below. FB-LINTER: DISABLE-NEXT-LINE FBL301
 Dim Shared textboxInteractionSmoke_BackendActive As Integer
-Dim Shared textboxInteractionSmoke_OriginalClipboard As String ' Test-owned external state.
+Dim Shared textboxInteractionSmoke_OriginalClipboard As String ' Test-owned external state. FB-LINTER: DISABLE-LINE FBL301
 
 
 Sub textboxInteractionSmoke_Fail( _

@@ -8,23 +8,10 @@
 
         Store one generated bitmap font for the omaGUI renderer.
 
-    Responsibilities:
-
-        - own printable-ASCII glyph alpha data for Arial 12 bold
-        - initialize the bounded glyph-pointer lookup table
-
     Source font:
 
         C:\Windows\Fonts\arialbd.ttf
         point size 12
-
-    Targets:
-
-        FreeBASIC include data; glyph tables require no operating-system font API at runtime.
-
-    Module API:
-
-        Defines font_arial_12_bold_chars and font_arial_12_bold_init_pointers for the font subsystem.
 
     This file intentionally does NOT contain:
 

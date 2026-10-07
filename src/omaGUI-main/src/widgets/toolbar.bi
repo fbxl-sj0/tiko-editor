@@ -4,6 +4,9 @@
 
     File: toolbar.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for toolbar.
+
     Purpose:
 
         Declare a portable classic command toolbar.
@@ -13,14 +16,6 @@
         - retain a bounded row of text commands and separators
         - expose checked enabled-state and metadata access
         - dispatch one shared callback after release-inside activation
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the toolbar component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

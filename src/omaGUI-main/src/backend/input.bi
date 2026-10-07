@@ -3,6 +3,9 @@
     ---------------
     File: input.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for input.
+
     Purpose:
         Declare the gfxlib input and deterministic test-input interface.
 
@@ -11,14 +14,6 @@
         - retain native pointer, key, and modifier transitions between frames
         - allow the GUI manager to route one pointer event to one widget
         - provide deterministic mouse, wheel, keyboard, and text test input
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the input component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
         - platform polling implementation

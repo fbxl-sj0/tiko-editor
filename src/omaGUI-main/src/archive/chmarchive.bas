@@ -4,6 +4,14 @@
 
     File: chmarchive.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements chmarchive.bi; declarations there define the interface.
+    Ownership:
+
+        The archive object owns its member index, reset table and cached
+        decoded interval. Open failure resets that storage; returned member
+        strings belong to the caller. File handles are closed before return.
+
     Purpose:
 
         Read individual files from a Compiled HTML Help archive on demand.
@@ -16,20 +24,6 @@
           compressed member
         - keep no more than one decompressed reset interval cached
 
-    Ownership:
-
-        The caller owns an archive returned by chmarchive_Open and releases it
-        with chmarchive_Close. Failed opens close the file and delete partial
-        archive state.
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
-
     This file intentionally does NOT contain:
 
         - HTML parsing or viewer state
@@ -39,6 +33,11 @@
     The CHM/LZX handling follows the LGPL-2.1-or-later libmspack format
     implementation. See LICENSES/LGPL-2.1.txt.
 '/
+
+' -------------------------------------------------------------------------
+' Implementation
+' -------------------------------------------------------------------------
+
 
 #include once "src/archive/chmarchive.bi"
 
@@ -355,7 +354,7 @@ Private Function chmarchive_LoadResetTable( _
     )
     systemText = ""
 
-    ' fblint: disable-next-line FBL310 -- this local name is declared earlier in the routine.
+    ' fblint: disable-next-line FBL310 REASON: resetTableName is a named CHM stream constant declared in this module.
     resetEntryIndex = chmarchive_FindRawSystemEntry(archive, resetTableName)
     If resetEntryIndex >= 0 Then
         tableLength = archive->entries(resetEntryIndex).length
@@ -573,7 +572,7 @@ Private Function chmarchive_ReadCompressedMember( _
 End Function
 
 
-' fblint: disable-next-line FBL111 -- One handle and cleanup path owns the bounded archive scan.
+' fblint: disable-next-line FBL111 REASON: Container records are checked in stream order and share one rollback path.
 Function chmarchive_Open( _
     ByRef filePath As Const String, ByRef errorText As String _
 ) As ChmArchive Ptr
@@ -745,6 +744,7 @@ Function chmarchive_Open( _
 
             encintPosition = CHMARCHIVE_PMGL_HEADER_BYTES
             entryEnd = CInt(chunkSize) - 2
+        ' fblint: disable-next-line FBL311 REASON: The loop counter bounds repeated work; the cursor or stream state supplies each value.
             For localEntry As Integer = 0 To numberOfEntries - 1
                 If chmarchive_ReadEncInt( _
                     chunkText, encintPosition, entryEnd, encodedValue _

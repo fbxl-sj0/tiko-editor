@@ -4,6 +4,9 @@
 
     File: confirmdialog.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for confirmdialog.
+
     Purpose:
 
         Declare modal decision windows for actions that need an explicit
@@ -14,14 +17,6 @@
         - preserve the existing confirm-or-cancel factory
         - create reusable one-, two-, or three-choice modal windows
         - expose caller-selected result values to the owning application
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the confirmdialog component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

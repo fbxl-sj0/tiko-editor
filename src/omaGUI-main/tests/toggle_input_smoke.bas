@@ -6,14 +6,6 @@
         - normalize nonzero state and preserve radio group exclusivity
         - distinguish state assignment from actual user activation
         - exercise label clicks, release cancellation, keyboard, and bounds
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
         - VBDOS value conversion, application events, or platform SDK calls
 '/

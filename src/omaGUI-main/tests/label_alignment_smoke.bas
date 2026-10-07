@@ -10,14 +10,6 @@
         - render bounded bold, italic, underline, and strikeout label styles
         - preserve opaque white when requesting literal label colors
         - verify mnemonic placement and the caller's clip after rendering
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
         - operating-system GUI calls or application-specific render callbacks
 '/

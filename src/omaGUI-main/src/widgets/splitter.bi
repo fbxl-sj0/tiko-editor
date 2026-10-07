@@ -1,18 +1,13 @@
 /'
     Project: omaGUI
     File: splitter.bi
+
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for splitter.
     Purpose: Declare a movable divider for application panes.
     Responsibilities:
         - expose bounded parent-relative positions and input notifications
         - retain one pointer drag and a borrowed GUI-thread callback
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the splitter component in the omaGUI include graph.
-
     This file intentionally does NOT contain:
         - pane ownership, application layout policy, or platform declarations
 '/

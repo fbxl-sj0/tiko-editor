@@ -4,6 +4,9 @@
 
     File: menubar.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for menubar.
+
     Purpose:
 
         Declare a portable Windows-style menu bar with bounded drop-downs.
@@ -15,14 +18,6 @@
         - optionally attach a bounded nested popup tree to each heading
         - support pointer, keyboard, separator, and callback behavior
         - expose mutable labels, visibility, checked, enabled, and shortcuts
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the menubar component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

@@ -3,6 +3,9 @@
     ---------------
     File: checkbox.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements checkbox.bi; declarations there define the interface.
+
     Purpose:
         Checkbox widget implementation.
 
@@ -11,14 +14,6 @@
         - toggle through pointer, keyboard, or mnemonic activation
         - retain the checked state
         - honor optional per-widget background and foreground colors
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
         - application-specific boolean semantics

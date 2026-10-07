@@ -4,6 +4,9 @@
 
     File: filesystem.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements filesystem.bi; declarations there define the interface.
+
     Purpose:
 
         Provide a bounded directory listing interface for native applications.
@@ -13,14 +16,6 @@
         - keep Win32 directory traversal gated inside omaGUI
         - use the FreeBASIC runtime directory iterator on other platforms
         - return entry names and attributes through a callback
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 
@@ -154,8 +149,10 @@ Function system_IsDirectory(ByRef directoryPath As Const String) As Integer
 
 #if defined(__FB_WIN32__)
     Dim As DWORD attributes = GetFileAttributesA(StrPtr(directoryPath))
-    If attributes = INVALID_FILE_ATTRIBUTES Then Return 0 ' FB-LINTER: DISABLE-LINE FBL310 REASON: windows.bi declares this Win32 SDK sentinel.
-    Return IIf((attributes And FILE_ATTRIBUTE_DIRECTORY) <> 0, -1, 0) ' FB-LINTER: DISABLE-LINE FBL310 REASON: windows.bi declares this Win32 SDK attribute.
+    ' fblint: disable-next-line FBL310 REASON: The Windows-only branch uses declarations supplied by windows.bi and the system headers.
+    If attributes = INVALID_FILE_ATTRIBUTES Then Return 0
+    ' fblint: disable-next-line FBL310 REASON: The Windows-only branch uses declarations supplied by windows.bi and the system headers.
+    Return IIf((attributes And FILE_ATTRIBUTE_DIRECTORY) <> 0, -1, 0)
 #else
     Dim As Integer attributes
     Dim As String lookupPath = directoryPath

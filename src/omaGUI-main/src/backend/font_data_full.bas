@@ -2,20 +2,15 @@
     Project: omaGUI
     ---------------
     File: font_data_full.bas
+
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI font_data_full implementation imported through omaGUI.bi.
     Purpose:
         Own embedded bitmap glyph data and initialize font pointers.
 
     Responsibilities:
         - select the default or redistributable font tables at compile time
         - initialize the glyph pointers once for the backend
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
         - text layout or rasterization

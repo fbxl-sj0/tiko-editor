@@ -4,6 +4,9 @@
 
     File: clipboard.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements clipboard.bi; declarations there define the interface.
+
     Purpose:
 
         Exchange bounded plain text through a portable process-local clipboard
@@ -16,14 +19,6 @@
         - use xclip only in opted-in supported Unix desktop builds
         - allow applications to force the portable implementation
         - reject unbounded clipboard payload growth
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 
@@ -71,7 +66,7 @@
     bounded copy remains available when the selected host integration cannot
     be compiled or reached, and it keeps intra-application editing reliable.
 '/
-' This is boundary-owned process state.
+' This is boundary-owned process state. FB-LINTER: DISABLE-NEXT-LINE FBL301
 Dim Shared clipboard_FallbackText As String
 
 
@@ -97,6 +92,7 @@ Const CLIPBOARD_WINDOWS_RETRY_MILLISECONDS As Integer = 1
 
 Private Function clipboard_WindowsOpen() As Integer
 
+    ' fblint: disable-next-line FBL311 REASON: The loop counter bounds repeated work; the cursor or stream state supplies each value.
     For attemptIndex As Integer = 1 To CLIPBOARD_WINDOWS_OPEN_ATTEMPTS
         If OpenClipboard(0) <> 0 Then Return 1
         Sleep CLIPBOARD_WINDOWS_RETRY_MILLISECONDS, 1
@@ -130,7 +126,7 @@ Private Function clipboard_WindowsGetText() As String
                 resultText = clipboard_BoundedText(resultText)
             End If
 
-            ' Win32 import exists only inside this backend.
+            ' Win32 import exists only inside this backend. FB-LINTER: DISABLE-NEXT-LINE FBL310
             GlobalUnlock clipboardHandle
         End If
     End If
@@ -157,7 +153,7 @@ Private Function clipboard_WindowsSetText( _
         Return 0
     End If
 
-    ' Movable ownership is required by SetClipboardData.
+    ' Movable ownership is required by SetClipboardData. FB-LINTER: DISABLE-NEXT-LINE FBL310
     allocationFlags = GMEM_MOVEABLE Or GMEM_ZEROINIT
     clipboardHandle = GlobalAlloc(allocationFlags, Len(textValue) + 1)
 
@@ -169,17 +165,17 @@ Private Function clipboard_WindowsSetText( _
     clipboardMemory = GlobalLock(clipboardHandle)
 
     If clipboardMemory = 0 Then
-        GlobalFree clipboardHandle ' Conditional Win32 import.
+        GlobalFree clipboardHandle ' Conditional Win32 import. FB-LINTER: DISABLE-LINE FBL310
         CloseClipboard()
         Return 0
     End If
 
     *Cast(ZString Ptr, clipboardMemory) = textValue
-    GlobalUnlock clipboardHandle ' Conditional Win32 import.
+    GlobalUnlock clipboardHandle ' Conditional Win32 import. FB-LINTER: DISABLE-LINE FBL310
     clipboardResult = SetClipboardData(CF_TEXT, clipboardHandle)
 
     If clipboardResult = 0 Then _
-        GlobalFree clipboardHandle ' Conditional Win32 import.
+        GlobalFree clipboardHandle ' Conditional Win32 import. FB-LINTER: DISABLE-LINE FBL310
     CloseClipboard()
 
     Return IIf(clipboardResult <> 0, 1, 0)
@@ -200,7 +196,7 @@ Private Function clipboard_XclipGetText() As String
     Dim As String resultText
     Dim As String chunkText
 
-    If Environ("DISPLAY") = "" Then Return clipboard_FallbackText
+    If Environ("DISPLAY") = "" Then Return clipboard_FallbackText ' fblint: disable-line FBL750 REASON: An absent DISPLAY uses the in-process clipboard fallback without invoking xclip.
     If Shell("command -v xclip >/dev/null 2>&1") <> 0 Then _
         Return clipboard_FallbackText
 
@@ -229,7 +225,7 @@ Private Sub clipboard_XclipSetText(ByVal textValue As String)
     Dim As Integer fileNumber = FreeFile
     Dim As Integer ioResult
 
-    If Environ("DISPLAY") = "" Then Exit Sub
+    If Environ("DISPLAY") = "" Then Exit Sub ' fblint: disable-line FBL750 REASON: An absent DISPLAY uses the in-process clipboard fallback without invoking xclip.
     If Shell("command -v xclip >/dev/null 2>&1") <> 0 Then Exit Sub
 
     ioResult = Open Pipe( _

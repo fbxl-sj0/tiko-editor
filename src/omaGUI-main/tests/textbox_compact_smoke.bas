@@ -3,15 +3,7 @@
     File: textbox_compact_smoke.bas
     Purpose: Verify single-line text remains visible in compact classic controls.
     Responsibilities: Compare 19-pixel editors with glyph output and retain multiline clipping.
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
-    This file intentionally does NOT contain: application logic or platform-specific drawing.
+    This file intentionally does NOT contain application logic or platform-specific drawing.
 '/
 #lang "fb"
 #define OMAGUI_IMPLEMENTATION

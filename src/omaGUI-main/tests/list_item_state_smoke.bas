@@ -4,15 +4,7 @@
     Purpose: Verify row identity, replacement and checked scroll operations.
     Responsibilities: test both list providers through their public APIs,
         including portable 64-bit values, aliasing and failed mutations.
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
-    This file intentionally does NOT contain: VB runtime or operating-system APIs.
+    This file intentionally does not contain VB runtime or operating-system APIs.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY

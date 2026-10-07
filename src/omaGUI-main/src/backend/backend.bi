@@ -3,6 +3,9 @@
     ---------------
     File: backend.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for backend.
+
     Purpose:
         Declare the gfxlib graphics, text, clipping, and window interface.
 
@@ -14,14 +17,6 @@
         - expose embedded-font measurement and rendering operations
         - load complete Unicode glyph packs for UTF-8 text
         - expose bitmap italic rendering without changing glyph advance
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the backend component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
         - widget-specific behavior
@@ -200,17 +195,10 @@ Declare Sub backend_PrintStyled( _
     ByVal text As String, ByVal text_style As Integer, _
     ByVal font_id As Integer = BACKEND_FONT_DEFAULT _
 )
-/'
-    Register 95 caller-owned glyph pointers for byte codes 32 through 126.
-    Each non-null block stores width, height, then width * height row-major
-    coverage bytes. Keep the table and blocks alive until replaced or cleared.
-'/
 Declare Sub backend_SetCustomFont(ByVal glyphs As UByte Ptr Ptr)
 /'
     Register a caller-owned, code-point-sorted Unicode glyph table. The arrays
     and glyph data must remain valid until the table is replaced or cleared.
-    Each non-null block stores width, height, then width * height row-major
-    coverage bytes.
 '/
 Declare Function backend_SetUnicodeGlyphs( _
     ByVal codepoints As UInteger Ptr, _

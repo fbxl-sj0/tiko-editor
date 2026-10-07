@@ -3,15 +3,7 @@
     File: message_dialog_smoke.bas
     Purpose: verify portable message layout, choices, and failed construction.
     Responsibilities: exercise public factories, modal input, and tree cleanup.
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
-    This file intentionally does NOT contain: operating-system dialog calls.
+    This file intentionally does NOT contain operating-system dialog calls.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY

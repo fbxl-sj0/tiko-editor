@@ -1,29 +1,16 @@
 /'
     Project: omaGUI
     File: textsurface.bi
-    Purpose:
 
-        Declare a bounded, retained byte-cell drawing surface.
-
-    Responsibilities:
-
-        - define the cell and surface storage layouts
-        - declare surface allocation, access, and rendering routines
-        - preserve cell ownership independently of widget captions and layout
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the textsurface component in the omaGUI include graph.
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for textsurface.
+    Purpose: Declare a bounded, retained byte-cell drawing surface.
+    Responsibilities: Own cells independently of a widget's caption and layout.
 
     This file intentionally does NOT contain:
 
-        - BASIC PRINT parsing or cursor policy
-        - input dispatch
-        - automatic repaint or widget-lifetime policy
+        - BASIC PRINT parsing, cursor policy,
+        input dispatch, or automatic repaint/lifetime policy.
 
     The containing widget owns the surface and calls textsurface_Release before
     destruction. Do not copy an initialized surface by value: cells is owned.

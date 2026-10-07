@@ -6,14 +6,6 @@
         - verify capture, range limits, keyboard adjustment, and parent offsets
         - reject interrupted drags and preserve callback lifetime safety
         - exercise theme rendering and the public API's invalid inputs
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
         - IDE pane policy or native operating-system input injection
 '/

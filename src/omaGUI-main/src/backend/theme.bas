@@ -2,6 +2,9 @@
     Project: omaGUI
     ---------------
     File: theme.bas
+
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements theme.bi; declarations there define the interface.
     Purpose: GUI Theme implementation for normal, dark, and black palettes.
 
     Responsibilities:
@@ -13,14 +16,6 @@
           semantic command, procedure, macro, variable, type, object, and
           member roles
         - reject invalid palette modes by falling back to normal mode
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 

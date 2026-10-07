@@ -16,14 +16,6 @@
         - reject invalid intervals without changing retained state
         - initialize the normal GUI-clock update path
 
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
 
         - wall-clock timing assertions

@@ -4,6 +4,9 @@
 
     File: font_omagui_serif_18_regular.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Embedded bitmap font tables selected by omaGUI; no runtime entry point.
+
     Purpose:
 
         Store one generated bitmap font for the omaGUI renderer.
@@ -17,14 +20,6 @@
 
         Liberation Serif Regular (SIL Open Font License 1.1), point size 18
 
-    Targets:
-
-        FreeBASIC include data; glyph tables require no operating-system font API at runtime.
-
-    Module API:
-
-        Defines font_omagui_serif_18_regular_chars and font_omagui_serif_18_regular_init_pointers for the font subsystem.
-
     This file intentionally does NOT contain:
 
         - runtime font selection
@@ -37,6 +32,7 @@
 
 ' Format: Width, Height, AlphaData...
 ' This module owns the pointer table and initializes it before text rendering.
+' fblint: disable-next-line FBL301
 Dim Shared As UByte Ptr font_omagui_serif_18_regular_chars(32 To 126)
 
 ' Font data for character 32 (' ')

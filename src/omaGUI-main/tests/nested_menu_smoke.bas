@@ -13,14 +13,6 @@
         - check viewport placement, drawing order, and focus restoration
         - ensure disabled commands and held presses cannot activate
 
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
         - application-specific menu commands
         - native operating-system menu calls

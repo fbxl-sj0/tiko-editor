@@ -4,6 +4,9 @@
 
     File: menubar.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements menubar.bi; declarations there define the interface.
+
     Purpose:
 
         Implement a portable Windows-style menu bar with bounded drop-downs.
@@ -14,14 +17,6 @@
         - render mutable visible labels, check marks, shortcuts, and separators
         - route release-inside pointer activation exactly once
         - dispatch explicit portable accelerators and keyboard navigation
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 

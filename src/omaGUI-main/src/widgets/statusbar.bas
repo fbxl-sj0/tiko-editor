@@ -4,6 +4,9 @@
 
     File: statusbar.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements statusbar.bi; declarations there define the interface.
+
     Purpose:
 
         Implement a portable classic status bar with bounded text panels.
@@ -13,14 +16,6 @@
         - divide current widget width among fixed and flexible panels
         - render classic recessed separators and aligned clipped-length text
         - own and release one StatusBarData record
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 

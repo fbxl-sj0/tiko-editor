@@ -4,7 +4,12 @@
     Purpose: Compare borrowed byte spans without allocating temporary strings.
     Responsibilities: Preserve exact equality, accept unaligned spans on DOS,
         and keep every read within the supplied byte count.
-    This file contains no text decoding, hashing or GUI state.
+    Targets: FreeBASIC fb dialect; DOS uses packed, unaligned word loads.
+    Module API: oma_BytesEqual compares caller-owned readable byte spans.
+    This file intentionally does NOT contain:
+        - text decoding
+        - hashing
+        - GUI state
 
     Callers keep both spans alive and unchanged until the call returns. A zero
     count needs no storage. Other calls require two readable spans of that size.

@@ -4,6 +4,9 @@
 
     File: scrollbar.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for scrollbar.
+
     Purpose:
         Declare horizontal and vertical scrollbar widgets.
 
@@ -12,14 +15,6 @@
         - expose scrollbar construction, rendering, pointer, and key handling
         - expose checked property setters for imported form metadata
         - expose repeat timing and private pointer-state cancellation
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the scrollbar component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
         - list ownership

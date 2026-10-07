@@ -3,15 +3,7 @@
     File: listbox_selection_smoke.bas
     Purpose: Verify independent row selection and caret navigation.
     Responsibilities: Exercise simple/extended gestures and row lifetimes.
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
-    This file intentionally does NOT contain: VB-specific event dispatch.
+    This file intentionally does NOT contain VB-specific event dispatch.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY

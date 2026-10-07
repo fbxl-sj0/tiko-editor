@@ -14,14 +14,6 @@
         - set and query literal black without confusing it with no override
         - clear the optional background while retaining the foreground
 
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
 
         - screenshot comparisons

@@ -4,6 +4,9 @@
 
     File: subwindow.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for subwindow.
+
     Purpose:
         Declare movable, resizable, ordered, closable child windows.
 
@@ -17,14 +20,6 @@
         - retain portable none, single, sizable-single, and double borders
         - retain normal geometry across minimized and maximized states
         - expose portable control-box, minimize, and maximize title controls
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the subwindow component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
         - window ordering policy

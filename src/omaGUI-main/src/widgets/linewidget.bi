@@ -4,6 +4,9 @@
 
     File: linewidget.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for linewidget.
+
     Purpose:
 
         Declare a registry-managed line drawing widget.
@@ -12,14 +15,6 @@
 
         - retain the line color
         - represent endpoints through the base widget rectangle
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the linewidget component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

@@ -4,6 +4,9 @@
 
     File: colordialog.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for colordialog.
+
     Purpose:
 
         Declare a modal chooser for the classic sixteen-color palette.
@@ -13,14 +16,6 @@
         - create an OMAGUI-owned palette dialog
         - expose accept, cancel, and selected-index state
         - provide the canonical classic palette index to RGB mapping
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the colordialog component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

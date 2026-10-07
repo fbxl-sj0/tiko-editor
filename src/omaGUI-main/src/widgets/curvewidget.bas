@@ -4,6 +4,9 @@
 
     File: curvewidget.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements curvewidget.bi; declarations there define the interface.
+
     Purpose:
 
         Implement a registry-managed quadratic curve drawing widget.
@@ -13,14 +16,6 @@
         - resolve parent-relative endpoints and the stored control point
         - render the curve through the graphics backend
         - release curve-specific state
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 

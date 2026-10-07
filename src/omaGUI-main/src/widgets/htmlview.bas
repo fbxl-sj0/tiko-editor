@@ -897,6 +897,8 @@ Private Function htmlview_CssSelectorMatches( _
 
     selectorText = LCase(Trim(selectorText))
     If Left(selectorText, 1) = "." Then
+        ' A class selector must name a class; a bare prefix matches nothing.
+        If Len(selectorText) < 2 Then Return 0
         className = Mid(selectorText, 2)
         classList = LCase(htmlview_GetAttribute(attributeText, "class"))
         Return IIf( _

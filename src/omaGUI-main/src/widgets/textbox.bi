@@ -4,6 +4,9 @@
 
     File: textbox.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for textbox.
+
     Purpose:
 
         Declare the reusable editable text widget used by editor popups and
@@ -23,18 +26,10 @@
         - expose an optional byte limit for native editing commands
         - retain optional caller-supplied client and text colors
         - optionally style embedded glyphs without changing editor metrics
-        - support masked single-line input without replacing editor text
+        - support single-line masked display without replacing editor text
         - expose optional synchronous KeyDown, KeyPress, and KeyUp callbacks
         - retain optional syntax-highlighting mode and semantic color metadata
           for keywords, types, objects, members, procedures, and literals
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the textbox component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 
@@ -42,6 +37,11 @@
         - keyboard polling
         - application-specific text validation
 '/
+
+' -------------------------------------------------------------------------
+' Implementation
+' -------------------------------------------------------------------------
+
 
 #ifndef __TEXTBOX_BI__
 #define __TEXTBOX_BI__
@@ -243,9 +243,9 @@ Type TextBoxData
     As Any Ptr key_up_handler
     ' Appended opt-in state preserves existing field offsets. Rebuild clients
     ' with this header when the record grows; it is not a frozen binary ABI.
-    ' FB-LINTER: DISABLE-NEXT-LINE FBL008 FBL-SEC-004 REASON: These are mask-state fields, not stored source text.
+    ' fblint: disable-next-line FBL-SEC-004 FBL008 REASON: This implements masked text input; the source contains no credential literal.
     As Integer password_character, password_saved_wordwrap
-    ' FB-LINTER: DISABLE-NEXT-LINE FBL008 FBL-SEC-004 REASON: This cached display contains only mask glyphs.
+    ' fblint: disable-next-line FBL-SEC-004 FBL008 REASON: This implements masked text input; the source contains no credential literal.
     As String password_display
     As String placeholder_text
     ' Existing editors keep visible selections on blur unless opted out.
@@ -348,7 +348,8 @@ Declare Function textbox_GetCursorRowRenderDamage(ByVal w As Widget Ptr, _
     ByRef widthValue As Integer, ByRef heightValue As Integer) As Integer
 Declare Sub textbox_Update(ByVal w As Widget Ptr)
 Declare Function textbox_GetText(ByVal w As Widget Ptr) As String
-' Zero clears mask mode; visible ASCII bytes 33..126 select its glyph.
+' fblint: disable-next-line FBL008 REASON: This implements masked text input; the source contains no credential literal.
+' Zero clears password mode; visible ASCII bytes 33..126 select its mask.
 ' Only single-line TextBoxes accept a mask. Text/selection queries stay real.
 Declare Function textbox_SetPasswordChar( _
     ByVal w As Widget Ptr, ByVal character_code As Integer _

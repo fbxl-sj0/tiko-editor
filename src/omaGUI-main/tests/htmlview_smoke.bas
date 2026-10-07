@@ -16,14 +16,6 @@
         - verify application-provided image schemes and ownership transfer
         - render and destroy the widget through the ordinary GUI manager
 
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
 
         - network access or external link launching

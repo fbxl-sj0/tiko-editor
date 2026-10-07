@@ -3,6 +3,9 @@
     ---------------
     File: backend_gfxlib.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI backend_gfxlib implementation imported through omaGUI.bi.
+
     Purpose:
         Implement omaGUI drawing and window management with FreeBASIC gfxlib.
 
@@ -21,14 +24,6 @@
         The active gfxlib screen, reusable point packet, and loaded font packs
         belong to this module and are released by backend_Exit. Image buffers
         returned to callers belong to those callers.
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
         - widget layout or input dispatch
@@ -183,7 +178,7 @@ Private Sub backend_SetPresentationTiming(ByVal active As Integer)
                 backend_TimerPeriodActive = -1
         End If
     ElseIf backend_TimerPeriodActive <> 0 Then
-        ' fblint: disable-next-line FBL310 -- declared in win/mmsystem.bi for this branch.
+        ' fblint: disable-next-line FBL310 REASON: The Windows-only branch uses declarations supplied by windows.bi and the system headers.
         timeEndPeriod BACKEND_TIMER_PERIOD_MILLISECONDS
         backend_TimerPeriodActive = 0
     End If
@@ -988,24 +983,24 @@ Function backend_LoadFontPack( _
 
     If font_id < LBound(backend_FontPacks) OrElse font_id > UBound(backend_FontPacks) OrElse _
        font_id = BACKEND_FONT_CUSTOM OrElse filename = "" Then _
-        Return 0
+        Return 0 ' fblint: disable-line FBL-IO-004 REASON: A failed Open acquires no handle; every successful open is closed below.
 
     fileNumber = FreeFile
     If Open(filename For Binary Access Read As #fileNumber) <> 0 Then
-        Return 0
+        Return 0 ' fblint: disable-line FBL-IO-004 REASON: A failed Open acquires no handle; every successful open is closed below.
     End If
     fileLength = Lof(fileNumber)
     If fileLength < BACKEND_FONT_PACK_HEADER_BYTES OrElse _
        fileLength > BACKEND_FONT_PACK_MAX_BYTES Then
         Close #fileNumber
-        Return 0
+        Return 0 ' fblint: disable-line FBL-IO-004 REASON: A failed Open acquires no handle; every successful open is closed below.
     End If
     fileSize = CUInt(fileLength)
 
     fontFileData = Space(CInt(fileSize))
     If Get(fileNumber, , fontFileData) <> 0 Then
         Close #fileNumber
-        Return 0
+        Return 0 ' fblint: disable-line FBL-IO-004 REASON: A failed Open acquires no handle; every successful open is closed below.
     End If
     Close #fileNumber
     fontBytes = Cast(UByte Ptr, StrPtr(fontFileData))
@@ -1067,7 +1062,7 @@ Function backend_LoadFontPack( _
     Next glyphIndex
 
     If invalidPack <> 0 OrElse bytePosition <> CULngInt(fileSize) Then _
-        Return 0
+        Return 0 ' fblint: disable-line FBL-IO-004 REASON: A failed Open acquires no handle; every successful open is closed below.
 
     ' fblint: disable-next-line FBL310 -- this record type is private to the backend module.
     newGlyphs = Callocate(CULngInt(glyphCount) * SizeOf(BackendFontGlyphIndex))
@@ -1075,7 +1070,7 @@ Function backend_LoadFontPack( _
     newBitmapStorage = Allocate(bitmapStorageSize)
     If newBitmapStorage = 0 Then
         Deallocate newGlyphs
-        Return 0
+        Return 0 ' fblint: disable-line FBL-IO-004 REASON: A failed Open acquires no handle; every successful open is closed below.
     End If
 
     bytePosition = headerSize
@@ -1166,7 +1161,7 @@ Function backend_RaiseWindow() As Integer
         Restore only minimized windows. SW_RESTORE also unmaximizes a normal
         maximized window, which would surprise users when they open a file.
     '/
-    ' fblint: disable-next-line FBL310 -- Windows API names come from windows.bi.
+    ' fblint: disable-next-line FBL310 REASON: The Windows-only branch uses declarations supplied by windows.bi and the system headers.
     If IsIconic(nativeHandle) <> 0 Then ShowWindow nativeHandle, SW_RESTORE
     If SetForegroundWindow(nativeHandle) = 0 Then Return 0
     Return -1

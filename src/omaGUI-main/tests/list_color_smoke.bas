@@ -12,19 +12,11 @@
 
         - set and query ListBox and ComboBox BackColor and ForeColor values
         - render both controls through the portable headless backend
-        - preserve TurboTrek's five-role palette and tab-aligned value column
         - clear every override before registry-owned destruction
-
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
 
     This file intentionally does NOT contain:
 
+        - selection-highlight color customization
         - filesystem enumeration or pointer-input checks
 '/
 

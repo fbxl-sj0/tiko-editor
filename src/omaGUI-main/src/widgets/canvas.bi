@@ -4,6 +4,9 @@
 
     File: canvas.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for canvas.
+
     Purpose:
 
         Declare a clipped application-rendered canvas widget.
@@ -14,14 +17,6 @@
         - expose pointer coordinates relative to the canvas
         - participate in ordinary widget layout, visibility, and input routing
         - optionally count complete primary-pointer clicks for host event loops
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the canvas component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

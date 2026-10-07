@@ -4,6 +4,9 @@
 
     File: timerwidget.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements timerwidget.bi; declarations there define the interface.
+
     Purpose:
 
         Implement a portable nonvisual interval timer through the FreeBASIC
@@ -15,14 +18,6 @@
         - handle the Timer function's midnight wrap
         - coalesce missed intervals after a delayed frame
         - invoke a caller-owned tick callback without retaining its context
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 

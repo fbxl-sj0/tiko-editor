@@ -6,14 +6,6 @@
         - check initial delay, repeat interval, and coalesced long pauses
         - pause paging at the pointer and retain the originally pressed region
         - cancel capture across parent visibility, enablement, and modal changes
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
         - VBDOS event dispatch or platform-specific input injection
 '/

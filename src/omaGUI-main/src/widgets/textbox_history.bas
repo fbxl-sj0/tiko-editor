@@ -4,6 +4,9 @@
 
     File: textbox_history.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI textbox_history implementation imported through omaGUI.bi.
+
     Purpose:
 
         Provide bounded per-widget Undo and Redo for editable textboxes.
@@ -15,14 +18,6 @@
         - discard stale Redo state after a divergent edit
         - bound retained text by entry count and aggregate bytes
         - reset history when a textbox begins editing another document
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 

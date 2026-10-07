@@ -3,15 +3,7 @@
     File: textbox_style_smoke.bas
     Purpose: Verify opt-in text styling on the actual portable framebuffer.
     Responsibilities: Check glyph coverage, clipping, editor state and masks.
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
-    This file intentionally does NOT contain: installed fonts or native controls.
+    This file intentionally does NOT rely on installed fonts or native controls.
 '/
 #lang "fb"
 #define OMAGUI_IMPLEMENTATION

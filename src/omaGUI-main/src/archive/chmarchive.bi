@@ -4,6 +4,9 @@
 
     File: chmarchive.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for chmarchive.
+
     Purpose:
 
         Declare a read-only, on-demand reader for Microsoft Compiled HTML
@@ -14,14 +17,6 @@
         - retain a bounded CHM directory and reset table
         - read stored or LZX-compressed members on demand
         - cache at most one decompressed LZX reset interval
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the chmarchive component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

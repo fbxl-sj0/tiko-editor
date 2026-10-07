@@ -4,6 +4,9 @@
 
     File: toolbar.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements toolbar.bi; declarations there define the interface.
+
     Purpose:
 
         Implement a portable classic command toolbar.
@@ -14,14 +17,6 @@
         - render normal, hot, pressed, and disabled command states
         - route one release-inside pointer activation to a shared callback
         - own and release one ToolBarData record
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 

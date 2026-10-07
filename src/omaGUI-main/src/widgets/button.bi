@@ -4,6 +4,9 @@
 
     File: button.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for button.
+
     Purpose:
 
         Declare the classic push-button widget.
@@ -14,14 +17,6 @@
         - expose checked label replacement and retrieval
         - retain an optional caller-supplied face color
         - expose pointer, keyboard, mnemonic, and polled activation
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the button component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

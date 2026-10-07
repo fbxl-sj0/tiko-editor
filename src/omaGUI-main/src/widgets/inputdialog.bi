@@ -4,6 +4,9 @@
 
     File: inputdialog.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for inputdialog.
+
     Purpose:
 
         Declare a modal two-field text prompt with optional boolean choices.
@@ -13,14 +16,6 @@
         - create one or two labeled text inputs in a modal window
         - optionally expose two checkbox choices
         - return accepted text, option, or cancellation state
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the inputdialog component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

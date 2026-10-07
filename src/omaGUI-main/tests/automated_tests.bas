@@ -14,14 +14,6 @@
         - add, find, and remove one ordinary widget
         - preserve unambiguous lookup names when a duplicate is registered
 
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
 
         - detailed interaction tests

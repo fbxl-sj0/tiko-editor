@@ -4,6 +4,9 @@
 
     File: htmlview.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for htmlview.
+
     Purpose:
 
         Declare a small, portable HTML document viewer widget.
@@ -16,14 +19,6 @@
         - retain bounded rules from linked local stylesheets
         - expose link activation through polling or an optional callback
         - expose an optional application image provider with clear ownership
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the htmlview component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

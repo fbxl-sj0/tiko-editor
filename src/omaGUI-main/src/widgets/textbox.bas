@@ -4990,85 +4990,99 @@ Function textbox_Create( _
 End Function
 
 
+' One fixed-width field list owns the process-local MKLongInt header.
+' Stack fields avoid temporary strings on idle comparisons. Keep pointer
+' values widened through the native unsigned width, as the original key does.
+Private Type Textbox_RenderFields
+    As LongInt values(0 To 68)
+End Type
+#assert SizeOf(Textbox_RenderFields) = 69 * SizeOf(LongInt)
+Private Sub textbox_RenderFillFields(ByVal d As TextBoxData Ptr, ByRef fields As Textbox_RenderFields)
+    fields.values(0) = d->active
+    fields.values(1) = d->multiline
+    fields.values(2) = d->wordwrap
+    fields.values(3) = d->scroll_offset
+    fields.values(4) = d->v_scroll
+    fields.values(5) = d->line_number_gutter_width
+    fields.values(6) = d->scrollbar_visible
+    fields.values(7) = d->horizontal_scrollbar_visible
+    fields.values(8) = d->background_color_override
+    fields.values(9) = d->foreground_color_override
+    fields.values(10) = d->background_color
+    fields.values(11) = d->foreground_color
+    fields.values(12) = d->syntax_mode
+    fields.values(13) = d->syntax_color_overrides
+    fields.values(14) = d->syntax_keyword_color
+    fields.values(15) = d->syntax_comment_color
+    fields.values(16) = d->syntax_string_color
+    fields.values(17) = d->syntax_number_color
+    fields.values(18) = d->syntax_preprocessor_color
+    fields.values(19) = d->syntax_type_color
+    fields.values(20) = d->syntax_command_color
+    fields.values(21) = d->syntax_procedure_color
+    fields.values(22) = d->syntax_macro_color
+    fields.values(23) = d->syntax_variable_color
+    fields.values(24) = d->syntax_constant_color
+    fields.values(25) = d->syntax_member_color
+    fields.values(26) = d->syntax_label_color
+    fields.values(27) = d->syntax_object_color
+    fields.values(28) = d->password_character ' FB-LINTER: DISABLE-LINE FBL008 FBL-SEC-004 REASON: Render identity tracks changes to mask mode.
+    fields.values(29) = d->hide_selection_on_blur
+    fields.values(30) = d->text_style
+    fields.values(31) = d->cue_banner_color
+    fields.values(32) = d->caret_color
+    fields.values(33) = d->surface_border_color
+    fields.values(34) = d->surface_background_color
+    fields.values(35) = d->surface_text_color
+    fields.values(36) = d->current_line_highlight
+    fields.values(37) = d->current_line_background_color
+    fields.values(38) = d->line_range_highlight
+    fields.values(39) = d->line_range_highlight_first
+    fields.values(40) = d->line_range_highlight_last
+    fields.values(41) = d->line_numbers_visible
+    fields.values(42) = d->line_number_text_style_flags
+    fields.values(43) = d->line_number_text_color
+    fields.values(44) = d->line_number_background_color
+    fields.values(45) = d->indent_guides_enabled
+    fields.values(46) = d->indent_width
+    fields.values(47) = d->virtual_space_enabled
+    fields.values(48) = d->indent_guides_color
+    fields.values(49) = d->right_edge_column
+    fields.values(50) = d->right_edge_color
+    fields.values(51) = d->fold_gutter_width
+    fields.values(52) = d->fold_margin_background_color
+    fields.values(53) = d->fold_symbol_foreground_color
+    fields.values(54) = d->fold_symbol_background_color
+    fields.values(55) = d->font_id
+    fields.values(56) = d->font_scale_percent
+    fields.values(57) = d->zoom_percent
+    fields.values(58) = d->extra_line_spacing
+    fields.values(59) = d->caret_visible
+    fields.values(60) = CLngInt(CUInt(d->text_display_handler))
+    fields.values(61) = CLngInt(CUInt(d->text_color_handler))
+    fields.values(62) = CLngInt(CUInt(d->text_style_handler))
+    fields.values(63) = CLngInt(CUInt(d->text_indicator_handler))
+    fields.values(64) = CLngInt(CUInt(d->gutter_marker_handler))
+    fields.values(65) = CLngInt(CUInt(d->gutter_marker_style_handler))
+    fields.values(66) = CLngInt(CUInt(d->fold_marker_handler))
+    fields.values(67) = CLngInt(CUInt(d->line_visibility_handler))
+    fields.values(68) = CLngInt(CUInt(d->render_state_handler))
+End Sub
+
 Private Function textbox_RenderObservationHeader(ByVal w As Widget Ptr) As String
     If w = 0 OrElse w->data = 0 Then Return ""
-    Dim As TextBoxData Ptr d = Cast(TextBoxData Ptr, w->data)
-    Dim As String result
-    #define OBSERVE_TEXT_FIELD(field) result &= MKLongInt(d->field)
-    OBSERVE_TEXT_FIELD(active)
-    OBSERVE_TEXT_FIELD(multiline)
-    OBSERVE_TEXT_FIELD(wordwrap)
-    OBSERVE_TEXT_FIELD(scroll_offset)
-    OBSERVE_TEXT_FIELD(v_scroll)
-    OBSERVE_TEXT_FIELD(line_number_gutter_width)
-    OBSERVE_TEXT_FIELD(scrollbar_visible)
-    OBSERVE_TEXT_FIELD(horizontal_scrollbar_visible)
-    OBSERVE_TEXT_FIELD(background_color_override)
-    OBSERVE_TEXT_FIELD(foreground_color_override)
-    OBSERVE_TEXT_FIELD(background_color)
-    OBSERVE_TEXT_FIELD(foreground_color)
-    OBSERVE_TEXT_FIELD(syntax_mode)
-    OBSERVE_TEXT_FIELD(syntax_color_overrides)
-    OBSERVE_TEXT_FIELD(syntax_keyword_color)
-    OBSERVE_TEXT_FIELD(syntax_comment_color)
-    OBSERVE_TEXT_FIELD(syntax_string_color)
-    OBSERVE_TEXT_FIELD(syntax_number_color)
-    OBSERVE_TEXT_FIELD(syntax_preprocessor_color)
-    OBSERVE_TEXT_FIELD(syntax_type_color)
-    OBSERVE_TEXT_FIELD(syntax_command_color)
-    OBSERVE_TEXT_FIELD(syntax_procedure_color)
-    OBSERVE_TEXT_FIELD(syntax_macro_color)
-    OBSERVE_TEXT_FIELD(syntax_variable_color)
-    OBSERVE_TEXT_FIELD(syntax_constant_color)
-    OBSERVE_TEXT_FIELD(syntax_member_color)
-    OBSERVE_TEXT_FIELD(syntax_label_color)
-    OBSERVE_TEXT_FIELD(syntax_object_color)
-    OBSERVE_TEXT_FIELD(password_character) ' FB-LINTER: DISABLE-LINE FBL008 FBL-SEC-004 REASON: Render identity tracks changes to mask mode.
-    OBSERVE_TEXT_FIELD(hide_selection_on_blur)
-    OBSERVE_TEXT_FIELD(text_style)
-    OBSERVE_TEXT_FIELD(cue_banner_color)
-    OBSERVE_TEXT_FIELD(caret_color)
-    OBSERVE_TEXT_FIELD(surface_border_color)
-    OBSERVE_TEXT_FIELD(surface_background_color)
-    OBSERVE_TEXT_FIELD(surface_text_color)
-    OBSERVE_TEXT_FIELD(current_line_highlight)
-    OBSERVE_TEXT_FIELD(current_line_background_color)
-    OBSERVE_TEXT_FIELD(line_range_highlight)
-    OBSERVE_TEXT_FIELD(line_range_highlight_first)
-    OBSERVE_TEXT_FIELD(line_range_highlight_last)
-    OBSERVE_TEXT_FIELD(line_numbers_visible)
-    OBSERVE_TEXT_FIELD(line_number_text_style_flags)
-    OBSERVE_TEXT_FIELD(line_number_text_color)
-    OBSERVE_TEXT_FIELD(line_number_background_color)
-    OBSERVE_TEXT_FIELD(indent_guides_enabled)
-    OBSERVE_TEXT_FIELD(indent_width)
-    OBSERVE_TEXT_FIELD(virtual_space_enabled)
-    OBSERVE_TEXT_FIELD(indent_guides_color)
-    OBSERVE_TEXT_FIELD(right_edge_column)
-    OBSERVE_TEXT_FIELD(right_edge_color)
-    OBSERVE_TEXT_FIELD(fold_gutter_width)
-    OBSERVE_TEXT_FIELD(fold_margin_background_color)
-    OBSERVE_TEXT_FIELD(fold_symbol_foreground_color)
-    OBSERVE_TEXT_FIELD(fold_symbol_background_color)
-    OBSERVE_TEXT_FIELD(font_id)
-    OBSERVE_TEXT_FIELD(font_scale_percent)
-    OBSERVE_TEXT_FIELD(zoom_percent)
-    OBSERVE_TEXT_FIELD(extra_line_spacing)
-    OBSERVE_TEXT_FIELD(caret_visible)
-    #undef OBSERVE_TEXT_FIELD
-    ' Keep the serialized callback fields at 8 bytes on both pointer widths.
-    ' Retained comparisons use this layout as an exact process-local key.
-    result &= MKLongInt(CLngInt(CUInt(d->text_display_handler)))
-    result &= MKLongInt(CLngInt(CUInt(d->text_color_handler)))
-    result &= MKLongInt(CLngInt(CUInt(d->text_style_handler)))
-    result &= MKLongInt(CLngInt(CUInt(d->text_indicator_handler)))
-    result &= MKLongInt(CLngInt(CUInt(d->gutter_marker_handler)))
-    result &= MKLongInt(CLngInt(CUInt(d->gutter_marker_style_handler)))
-    result &= MKLongInt(CLngInt(CUInt(d->fold_marker_handler)))
-    result &= MKLongInt(CLngInt(CUInt(d->line_visibility_handler)))
-    result &= MKLongInt(CLngInt(CUInt(d->render_state_handler)))
-    result &= MKLongInt(Len(d->cue_banner_text)) & d->cue_banner_text
-    Return result
+    Dim As TextBoxData Ptr d = w->data
+    Dim As Textbox_RenderFields fields
+    textbox_RenderFillFields d, fields
+    Dim As String result = String(SizeOf(fields), 0)
+    If Len(result) <> SizeOf(fields) Then
+        gui_InvalidateAll
+        Return ""
+    End If
+    ' MKLongInt retains native byte order. The explicit 8-byte fields avoid
+    ' structure padding and preserve the key consumed by row-damage handlers.
+    memcpy StrPtr(result), @fields.values(0), SizeOf(fields)
+    Return result & MKLongInt(Len(d->cue_banner_text)) & d->cue_banner_text
 End Function
 
 Private Function textbox_RenderObservationMovement(ByVal d As TextBoxData Ptr) As String
@@ -5102,24 +5116,45 @@ Function textbox_RenderObservationMatches(ByVal w As Widget Ptr, _
     If w = 0 OrElse w->data = 0 Then Return 0
     If observationOffset < 0 OrElse observationOffset > Len(previousKey) Then Return 0
     Dim As TextBoxData Ptr d = w->data
-    Dim As String header = textbox_RenderObservationHeader(w)
-    ' Layout: header, source length (8), exact source bytes, movement (57).
-    ' Subtract before adding offsets, so malformed retained keys cannot wrap.
-    Const fixedBytes As Integer = 65
+    Dim As Textbox_RenderFields fields
+    Const suffixBytes As Integer = 65
+    Const fixedHeaderBytes As Integer = SizeOf(Textbox_RenderFields) + 8
     Dim As Integer available = Len(previousKey) - observationOffset
-    If available < fixedBytes OrElse Len(header) > available - fixedBytes Then Return 0
-    If Len(d->text) <> available - fixedBytes - Len(header) Then Return 0
+    If available < fixedHeaderBytes + suffixBytes Then Return 0
+    available -= fixedHeaderBytes + suffixBytes
+    ' Subtract bounded lengths before adding offsets. A malformed key must
+    ' decline reuse before any byte read, including a negative or huge offset.
+    If Len(d->cue_banner_text) > available Then Return 0
+    available -= Len(d->cue_banner_text)
+    If Len(d->text) <> available Then Return 0
+    textbox_RenderFillFields d, fields
     Dim As Const UByte Ptr retainedBytes = StrPtr(previousKey) + observationOffset
-    If oma_BytesEqual(retainedBytes, StrPtr(header), Len(header)) = 0 Then Return 0
-    Dim As String sourceLength = MKLongInt(Len(d->text))
-    retainedBytes += Len(header)
-    If oma_BytesEqual(retainedBytes, StrPtr(sourceLength), 8) = 0 Then Return 0
+    If oma_BytesEqual(retainedBytes, @fields.values(0), SizeOf(fields)) = 0 Then Return 0
+    retainedBytes += SizeOf(fields)
+    Dim As LongInt cueLength = Len(d->cue_banner_text)
+    If oma_BytesEqual(retainedBytes, @cueLength, 8) = 0 Then Return 0
     retainedBytes += 8
-    ' Exact equality catches same-length legacy writes without a serial bump.
-    ' Borrow the live document only for this GUI-thread call; never retain it.
+    If oma_BytesEqual(retainedBytes, StrPtr(d->cue_banner_text), Len(d->cue_banner_text)) = 0 Then Return 0
+    retainedBytes += Len(d->cue_banner_text)
+    Dim As LongInt sourceLength = Len(d->text)
+    If oma_BytesEqual(retainedBytes, @sourceLength, 8) = 0 Then Return 0
+    retainedBytes += 8
+    ' Read exact source bytes so same-length legacy writes still invalidate.
     If oma_BytesEqual(retainedBytes, StrPtr(d->text), Len(d->text)) = 0 Then Return 0
-    Dim As String movement = textbox_RenderObservationMovement(d)
-    Return oma_BytesEqual(retainedBytes + Len(d->text), StrPtr(movement), Len(movement))
+    retainedBytes += Len(d->text)
+    Dim As LongInt movement(0 To 6)
+    movement(0) = Len(d->text)
+    movement(1) = d->cursor_pos
+    movement(2) = d->sel_start
+    movement(3) = d->sel_end
+    movement(4) = d->cursor_virtual_space
+    movement(5) = d->sel_start_virtual_space
+    movement(6) = d->sel_end_virtual_space
+    Const movementBytes As Integer = 7 * SizeOf(LongInt)
+    If oma_BytesEqual(retainedBytes, @movement(0), movementBytes) = 0 Then Return 0
+    Dim As UByte blink = IIf(d->active <> 0 AndAlso d->caret_visible <> 0 AndAlso _
+        gui_CaretBlinkVisible(Timer) <> 0, 1, 0)
+    Return IIf(retainedBytes[movementBytes] = blink, -1, 0)
 End Function
 
 

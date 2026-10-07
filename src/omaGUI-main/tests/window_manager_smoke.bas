@@ -18,14 +18,6 @@
         - prove list selection, keyboard focus, and wheel scrolling work
         - prove a callback may remove its own tree and add its replacement
 
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
 
         - native operating-system window resizing

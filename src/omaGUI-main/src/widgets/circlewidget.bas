@@ -4,6 +4,9 @@
 
     File: circlewidget.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements circlewidget.bi; declarations there define the interface.
+
     Purpose:
 
         Implement a registry-managed circle drawing widget.
@@ -13,14 +16,6 @@
         - resolve the stored top-left position into a circle center
         - render filled or outlined circles through the backend
         - release circle-specific state
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 

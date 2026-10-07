@@ -167,11 +167,13 @@ End Function
 Function rasterimage_DetectFormat( _
     bytes() As UByte, ByVal byteCount As LongInt _
 ) As Integer
+    ' Dimension zero safely queries allocation before any element bounds.
+    If UBound(bytes, 0) <> 1 Then Return RASTERIMAGE_FORMAT_UNKNOWN
     Dim As Integer firstIndex
     Dim As Integer lastIndex
 
     If byteCount < 1 Then Return RASTERIMAGE_FORMAT_UNKNOWN
-    ' FreeBASIC reports UBound=-1 for an unallocated dynamic array.
+    ' Allocated input still requires valid, zero-based element bounds.
     If UBound(bytes) < LBound(bytes) Then Return RASTERIMAGE_FORMAT_UNKNOWN
     firstIndex = LBound(bytes)
     lastIndex = UBound(bytes)

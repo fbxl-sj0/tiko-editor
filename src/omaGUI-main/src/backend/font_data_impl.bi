@@ -12,14 +12,6 @@
 
         - define immutable width, height, and alpha blocks for each glyph
 
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the font_data_impl component in the omaGUI include graph.
-
     This file intentionally does NOT contain:
 
         - pointer initialization

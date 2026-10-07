@@ -3,6 +3,9 @@
     ---------------
     File: scrollbar.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements scrollbar.bi; declarations there define the interface.
+
     Purpose:
         ScrollBar widget implementation.
 
@@ -11,14 +14,6 @@
          Handle signed-range changes through pointer and keyboard input
          Repeat held arrow/page steps with bounded GUI-thread timing
          Validate imported range, value, and increment properties
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
          List selection behavior

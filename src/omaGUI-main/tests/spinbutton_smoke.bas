@@ -14,14 +14,6 @@
         - verify endpoint wrapping and rejected invalid values
         - render and destroy the widget through the normal GUI registry
 
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
 
         - native desktop-window interaction

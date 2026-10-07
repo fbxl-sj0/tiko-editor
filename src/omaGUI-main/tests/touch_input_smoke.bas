@@ -3,15 +3,7 @@
     File: touch_input_smoke.bas
     Purpose: Check bounded touch contacts and compatibility pointer behavior.
     Responsibilities: Exercise stable IDs, dispatch masks, and final release.
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
-    This file intentionally does NOT contain: platform touch hardware setup.
+    This file intentionally does NOT contain platform touch hardware setup.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY

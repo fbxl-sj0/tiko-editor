@@ -1,29 +1,16 @@
 /'
     Project: omaGUI
     File: textsurface.bas
-    Purpose:
 
-        Retain and render bounded, individually colored byte cells.
-
-    Responsibilities:
-
-        - allocate and release the cell grid transactionally
-        - clip cell reads and writes to the current grid
-        - redraw occupied cells through the backend
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements textsurface.bi; declarations there define the interface.
+    Purpose: Retain and render bounded, individually colored byte cells.
+    Responsibilities: Transactional allocation, clipped writes, and cell redraw.
 
     This file intentionally does NOT contain:
 
-        - widget creation or layout
-        - input handling
-        - BASIC PRINT formatting or cursor advancement
+        - widget creation, input, or PRINT
+        formatting. The caller owns layout and cursor advancement.
 
     Ownership and threading: each surface owns one zeroed byte allocation;
     release pairs it with Deallocate. Calls are synchronous on the graphics-owning thread.
@@ -62,6 +49,7 @@ Function textsurface_Resize(ByRef surface As GuiTextSurface, ByVal columns As In
         For row As Integer = 0 To kept_rows - 1
             For column As Integer = 0 To kept_columns - 1
                 ' Both indices lie in the checked old/new grid intersection.
+                ' fblint: disable-next-line FBL525
                 new_cells[row * columns + column] = surface.cells[row * surface.columns + column]
             Next column
         Next row

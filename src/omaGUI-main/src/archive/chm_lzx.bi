@@ -4,6 +4,9 @@
 
     File: chm_lzx.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for chm_lzx.
+
     Purpose:
 
         Declare the bounded LZX decompressor used by CHM archive reads.
@@ -12,14 +15,6 @@
 
         - expose one reset-interval decompression operation
         - keep codec state private to the archive implementation
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the chm_lzx component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

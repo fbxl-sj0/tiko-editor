@@ -16,14 +16,6 @@
         - set, query, and clear an explicit client background color
         - reject an unsupported border style without changing retained state
 
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
 
         - screenshot comparisons

@@ -15,14 +15,6 @@
         - reject truncated input without leaking a gfxlib image
         - optionally probe caller-supplied corpus image paths
 
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
 
         - network image retrieval

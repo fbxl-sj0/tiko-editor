@@ -4,6 +4,9 @@
 
     File: rtfview.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for rtfview.
+
     Purpose:
 
         Declare a read-only RTF document widget for native FreeBASIC GUIs.
@@ -13,14 +16,6 @@
         - retain bounded RTF paragraphs and character-format runs
         - expose topic text loading and plain-text loading
         - expose rendering, scrolling, and lifecycle entry points
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the rtfview component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

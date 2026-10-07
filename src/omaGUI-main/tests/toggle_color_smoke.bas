@@ -14,14 +14,6 @@
         - set and query literal client and indicator/text colors
         - clear every override before registry-owned destruction
 
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
 
         - group-selection or pointer-input checks

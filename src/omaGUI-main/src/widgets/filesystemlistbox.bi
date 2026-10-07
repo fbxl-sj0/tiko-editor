@@ -4,6 +4,9 @@
 
     File: filesystemlistbox.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for filesystemlistbox.
+
     Purpose:
 
         Declare portable factories for the classic directory, drive, and file
@@ -18,14 +21,6 @@
         - match file patterns consistently across host filesystems
         - preserve the old list when a path, pattern, or capacity check fails
         - combine explicit semicolon-separated patterns without duplicate rows
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the filesystemlistbox component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

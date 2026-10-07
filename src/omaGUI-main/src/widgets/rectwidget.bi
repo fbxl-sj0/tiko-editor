@@ -4,6 +4,9 @@
 
     File: rectwidget.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for rectwidget.
+
     Purpose:
 
         Declare a registry-managed rectangle drawing widget.
@@ -12,14 +15,6 @@
 
         - retain rectangle color and fill state
         - expose rectangle creation and rendering lifecycle entry points
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the rectwidget component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

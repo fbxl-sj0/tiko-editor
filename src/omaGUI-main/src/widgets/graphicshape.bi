@@ -4,6 +4,9 @@
 
     File: graphicshape.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for graphicshape.
+
     Purpose:
 
         Generic lightweight graphic shape widget used by imported HMI
@@ -16,14 +19,6 @@
         - expose a single creation API for imported graphics
         - expose a styled creation API for imported HMI graphics
         - expose opt-in input state for imported operator controls
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the graphicshape component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

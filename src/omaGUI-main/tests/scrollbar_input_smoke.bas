@@ -6,14 +6,6 @@
         - preserve exact values when pressing a quantized thumb
         - drag beyond the track, restore the grab position, and page on press
         - check optional arrows, reversed direction, and signed 32-bit bounds
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
         - VBDOS event dispatch or application-specific scrolling
 '/

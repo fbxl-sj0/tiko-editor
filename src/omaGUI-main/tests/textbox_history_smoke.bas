@@ -18,14 +18,6 @@
         - reset history when a textbox begins another document
         - enforce entry-count and aggregate-byte bounds
 
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
 
         - JRPG script compilation
@@ -60,7 +52,7 @@ Const TEXTBOX_HISTORY_SMOKE_EXIT_DIVERGENT As Integer = 5
 Const TEXTBOX_HISTORY_SMOKE_EXIT_RESET As Integer = 6
 Const TEXTBOX_HISTORY_SMOKE_EXIT_BOUND As Integer = 7
 
-' Failure cleanup is shared with the assertions below.
+' Failure cleanup is shared with the assertions below. FB-LINTER: DISABLE-NEXT-LINE FBL301
 Dim Shared textboxHistorySmoke_BackendActive As Integer
 
 

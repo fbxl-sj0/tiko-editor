@@ -5,14 +5,6 @@
     Responsibilities:
         - position an owned list scrollbar on first render and after movement
         - check opt-in label clipping and restoration of the caller's clip
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
         - VB source handlers or visible desktop interaction
 '/

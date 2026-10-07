@@ -4,15 +4,7 @@
     Purpose: Verify editor font packs and UTF-8 text in the combined backend.
     Responsibilities: Check font slots, fallback, replacement, clearing and
         rejected loads without retaining stale ASCII metrics.
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
-    This file intentionally does NOT contain: widget or application behavior.
+    This file intentionally does NOT contain widget or application behavior.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY

@@ -6,14 +6,6 @@
         - preserve selected source, line endings, caret direction, and undo state
         - exercise opt-in keyboard input without changing normal focus traversal
         - reject invalid, read-only, single-line, and oversized edits atomically
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
         - IDE menu policy, host clipboard access, or platform keyboard injection
 '/

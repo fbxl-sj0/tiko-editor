@@ -4,6 +4,9 @@
 
     File: canvas.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements canvas.bi; declarations there define the interface.
+
     Purpose:
 
         Implement a safe custom-drawing surface in the widget registry.
@@ -15,14 +18,6 @@
         - invoke optional caller render and update callbacks
         - count opt-in clicks after a routed press and release inside the canvas
         - release canvas metadata without taking ownership of caller context
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 

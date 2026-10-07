@@ -4,6 +4,9 @@
 
     File: wildcard.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for wildcard.
+
     Purpose:
 
         Declare the shared, platform-independent filename wildcard matcher.
@@ -12,14 +15,6 @@
 
         - expose case-insensitive '*' and '?' matching to filesystem widgets
         - keep wildcard semantics independent of the host Dir implementation
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the wildcard component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

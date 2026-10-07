@@ -6,14 +6,6 @@
         - retain presses, releases, repeats, bytes, and exact chord order
         - check masks, copy ownership, bounds, overflow, and screen handoff
         - exercise native FB.Event translation without operating-system injection
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
         - VBDOS event handlers or a keyboard-layout translator
         - assertions about physical keyboard delivery by a platform driver

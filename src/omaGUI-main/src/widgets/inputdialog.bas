@@ -4,6 +4,9 @@
 
     File: inputdialog.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements inputdialog.bi; declarations there define the interface.
+
     Purpose:
 
         Implement a bounded modal prompt for text and boolean input.
@@ -14,14 +17,6 @@
         - retain user values while the caller inspects the completed result
         - report accept and cancel without applying application policy
         - release dialog metadata through the normal widget lifecycle
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 

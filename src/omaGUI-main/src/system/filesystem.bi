@@ -4,6 +4,9 @@
 
     File: filesystem.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for filesystem.
+
     Purpose:
 
         Expose the small filesystem operations needed by portable widgets and
@@ -13,14 +16,6 @@
 
         - enumerate directory entries through a caller-owned callback
         - identify directories while keeping platform calls inside omaGUI
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the filesystem component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

@@ -4,6 +4,9 @@
 
     File: chm_lzx.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements chm_lzx.bi; declarations there define the interface.
+
     Purpose:
 
         Decode one bounded LZX reset interval from a CHM compressed stream.
@@ -13,14 +16,6 @@
         - read the LZX MSB-first word bitstream
         - decode canonical Huffman trees and LZ matches
         - return only the requested reset interval in memory
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 
@@ -32,6 +27,11 @@
     algorithm in libmspack, licensed under LGPL-2.1-or-later. See
     LICENSES/LGPL-2.1.txt.
 '/
+
+' -------------------------------------------------------------------------
+' Implementation
+' -------------------------------------------------------------------------
+
 
 #include once "src/archive/chm_lzx.bi"
 
@@ -361,6 +361,7 @@ Private Function chmlzx_ReadLengths( _
                 Return chmlzx_SetError( _
                     decoder, "LZX zero-length run exceeds its code table" _
                 )
+            ' fblint: disable-next-line FBL311 REASON: The loop counter bounds repeated work; the cursor or stream state supplies each value.
             For repeatIndex As Integer = 0 To repeatCount - 1
                 targetTree->codeLengths(targetIndex) = 0
                 targetIndex += 1
@@ -373,6 +374,7 @@ Private Function chmlzx_ReadLengths( _
                 Return chmlzx_SetError( _
                     decoder, "LZX long zero run exceeds its code table" _
                 )
+            ' fblint: disable-next-line FBL311 REASON: The loop counter bounds repeated work; the cursor or stream state supplies each value.
             For repeatIndex As Integer = 0 To repeatCount - 1
                 targetTree->codeLengths(targetIndex) = 0
                 targetIndex += 1
@@ -391,6 +393,7 @@ Private Function chmlzx_ReadLengths( _
             decodedLength = _
                 (CInt(targetTree->codeLengths(targetIndex)) - _
                  decodedLength + 17) Mod 17
+            ' fblint: disable-next-line FBL311 REASON: The loop counter bounds repeated work; the cursor or stream state supplies each value.
             For repeatIndex As Integer = 0 To repeatCount - 1
                 targetTree->codeLengths(targetIndex) = CByte(decodedLength)
                 targetIndex += 1
@@ -680,6 +683,7 @@ Private Function chmlzx_DecodeRun( _
             )
         sourcePosition = windowPosition - CInt(matchOffset)
         If sourcePosition < 0 Then sourcePosition += decoder->windowSize
+        ' fblint: disable-next-line FBL311 REASON: The loop counter bounds repeated work; the cursor or stream state supplies each value.
         For copyIndex As Integer = 0 To matchLength - 1
             decoder->window[windowPosition] = decoder->window[sourcePosition]
             windowPosition += 1
@@ -709,6 +713,7 @@ Private Function chmlzx_DecodeUncompressedRun( _
             decoder, "invalid raw LZX block length" _
         )
 
+    ' fblint: disable-next-line FBL311 REASON: The loop counter bounds repeated work; the cursor or stream state supplies each value.
     For byteIndex As Integer = 0 To byteCount - 1
         If chmlzx_ReadRawByte(decoder, byteValue) = 0 Then Return 0
         decoder->window[decoder->windowPosition] = byteValue
@@ -854,7 +859,7 @@ Private Function chmlzx_DecodeFrame( _
     For framePosition = 0 To frameLength - 1
         outputText[outputOffset + framePosition] = _
             decoder->window[ _
-                (frameWindowStart + framePosition) Mod decoder->windowSize _
+                (frameWindowStart + framePosition) Mod decoder->windowSize _ ' fblint: disable-line FBL406 REASON: Range checks keep the dividend nonnegative and the modulus positive before this calculation.
             ]
     Next framePosition
 

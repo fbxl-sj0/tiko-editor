@@ -4,6 +4,9 @@
 
     File: menu.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements menu.bi; declarations there define the interface.
+
     Purpose:
 
         Implement portable popup menus and owned submenu trees.
@@ -17,14 +20,6 @@
         - retain parent menus while their child branches are open
         - place, scroll, and navigate complete trees inside the viewport
         - restore focus when a tree is dismissed
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 
@@ -1103,6 +1098,7 @@ End Sub
 Private Sub menu_MoveSelection(ByVal m As Widget Ptr, ByVal direction As Integer)
     Dim As MenuData Ptr d = m->data
     Dim As Integer candidate = d->selected
+    ' fblint: disable-next-line FBL311 REASON: The loop counter bounds repeated work; the cursor or stream state supplies each value.
     For attempt As Integer = 0 To d->count - 1
         candidate += direction
         If candidate < 0 Then candidate = d->count - 1

@@ -7,14 +7,6 @@
         - bound text storage and indexes without partial mutations
         - distinguish user-open, activation, and programmatic state changes
         - finish internal state before callbacks which release widget data
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
         - filesystem enumeration or VBDOS event handlers
 '/

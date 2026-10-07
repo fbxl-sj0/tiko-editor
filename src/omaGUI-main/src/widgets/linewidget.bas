@@ -4,6 +4,9 @@
 
     File: linewidget.bas
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: Implements linewidget.bi; declarations there define the interface.
+
     Purpose:
 
         Implement a registry-managed line drawing widget.
@@ -13,14 +16,6 @@
         - convert the base widget rectangle into two endpoints
         - render the line through the graphics backend
         - release line-specific state
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Implementation unit assembled by omaGUI.bi when OMAGUI_IMPLEMENTATION is defined.
 
     This file intentionally does NOT contain:
 

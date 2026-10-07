@@ -3,15 +3,7 @@
     File: textsurface_smoke.bas
     Purpose: Verify retained byte-cell storage and native PictureBox rendering.
     Responsibilities: Exercise bounds, ownership, clipping, colors, and CP437.
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
-    This file intentionally does NOT contain: a BASIC cursor or PRINT parser.
+    This file intentionally does NOT implement a BASIC cursor or PRINT parser.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY

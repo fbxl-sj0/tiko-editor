@@ -4,6 +4,9 @@
 
     File: spinbutton.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for spinbutton.
+
     Purpose:
 
         Declare a bounded horizontal or vertical spin-button widget.
@@ -14,14 +17,6 @@
         - expose pointer, keyboard, and programmatic value changes
         - invoke an optional change callback after user activation
         - opt into directional step notifications and held-input repetition
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the spinbutton component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

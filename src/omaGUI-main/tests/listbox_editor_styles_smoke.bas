@@ -4,15 +4,7 @@
     Purpose: Check editor list styles alongside the local item model.
     Responsibilities: Exercise checklist row lifetime, table header hits,
         and bounded dropdown presentation in a drawable headless backend.
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
-    This file intentionally does NOT contain: application list policy.
+    This file intentionally does NOT contain application list policy.
 '/
 
 #lang "fb"

@@ -3,15 +3,7 @@
     File: canvas_click_smoke.bas
     Purpose: Verify opt-in canvas clicks through the ordinary input manager.
     Responsibilities: Exercise capture, cancellation, occlusion, and default compatibility.
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
-    This file intentionally does NOT contain: a platform pointer provider.
+    This file intentionally does NOT contain a platform pointer provider.
 '/
 #lang "fb"
 #define OMAGUI_IMPLEMENTATION

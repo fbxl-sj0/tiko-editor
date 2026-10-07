@@ -8,14 +8,6 @@
         - verify a replacement tree cannot inherit the activating key event
         - retain pointer, Enter, Space, and polled activation behavior
         - accept null widgets and released private data during update
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
         - host window APIs, allocator instrumentation, or VBDOS event handling
 '/

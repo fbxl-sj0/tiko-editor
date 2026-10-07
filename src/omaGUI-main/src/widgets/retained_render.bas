@@ -130,73 +130,174 @@ Sub gui_InvalidateRect(ByVal x As Integer, ByVal y As Integer, _
     gui_DamageCount += 1
 End Sub
 
+' -------------------------------------------------------------------------
+' Exact visual observation fields
+' -------------------------------------------------------------------------
+Private Type GUI_RetainedPaletteFields
+    As LongInt values(0 To 45)
+End Type
+#assert SizeOf(GUI_RetainedPaletteFields) = 46 * SizeOf(LongInt)
+Private Type GUI_RetainedPrefixFields
+    As LongInt values(0 To 7)
+End Type
+#assert SizeOf(GUI_RetainedPrefixFields) = 8 * SizeOf(LongInt)
+Private Sub gui_RetainedFillPalette(ByRef themePalette As Const GUI_Theme, _
+    ByRef fields As GUI_RetainedPaletteFields)
+    fields.values(0) = themePalette.bg_face
+    fields.values(1) = themePalette.bg_widget
+    fields.values(2) = themePalette.bg_dark
+    fields.values(3) = themePalette.bg_light
+    fields.values(4) = themePalette.text_main
+    fields.values(5) = themePalette.text_select
+    fields.values(6) = themePalette.bg_select
+    fields.values(7) = themePalette.win_border
+    fields.values(8) = themePalette.menu_background
+    fields.values(9) = themePalette.menu_text
+    fields.values(10) = themePalette.menu_selected_background
+    fields.values(11) = themePalette.menu_selected_text
+    fields.values(12) = themePalette.menu_separator
+    fields.values(13) = themePalette.menu_disabled_text
+    fields.values(14) = themePalette.control_style
+    fields.values(15) = themePalette.title_background
+    fields.values(16) = themePalette.title_text
+    fields.values(17) = themePalette.classic_access_text
+    fields.values(18) = themePalette.classic_active_border_background
+    fields.values(19) = themePalette.classic_active_border_text
+    fields.values(20) = themePalette.classic_command_text
+    fields.values(21) = themePalette.classic_disabled_text
+    fields.values(22) = themePalette.classic_menu_background
+    fields.values(23) = themePalette.classic_menu_text
+    fields.values(24) = themePalette.classic_menu_selected_background
+    fields.values(25) = themePalette.classic_menu_selected_text
+    fields.values(26) = themePalette.classic_scrollbar_background
+    fields.values(27) = themePalette.classic_scrollbar_text
+    fields.values(28) = themePalette.syntax_keyword_color
+    fields.values(29) = themePalette.syntax_comment_color
+    fields.values(30) = themePalette.syntax_string_color
+    fields.values(31) = themePalette.syntax_number_color
+    fields.values(32) = themePalette.syntax_preprocessor_color
+    fields.values(33) = themePalette.syntax_type_color
+    fields.values(34) = themePalette.syntax_command_color
+    fields.values(35) = themePalette.syntax_procedure_color
+    fields.values(36) = themePalette.syntax_macro_color
+    fields.values(37) = themePalette.syntax_variable_color
+    fields.values(38) = themePalette.syntax_constant_color
+    fields.values(39) = themePalette.syntax_member_color
+    fields.values(40) = themePalette.syntax_label_color
+    fields.values(41) = themePalette.syntax_object_color
+    fields.values(42) = themePalette.mode
+    fields.values(43) = themePalette.panel_face
+    fields.values(44) = themePalette.accent_secondary
+    fields.values(45) = themePalette.visual_style
+End Sub
+
 Private Function gui_RetainedPaletteKey(ByRef themePalette As Const GUI_Theme) As String
-    Dim As String themeKey
-    #define RETAIN_THEME_FIELD(field) themeKey &= MKLongInt(themePalette.field)
-    RETAIN_THEME_FIELD(bg_face)
-    RETAIN_THEME_FIELD(bg_widget)
-    RETAIN_THEME_FIELD(bg_dark)
-    RETAIN_THEME_FIELD(bg_light)
-    RETAIN_THEME_FIELD(text_main)
-    RETAIN_THEME_FIELD(text_select)
-    RETAIN_THEME_FIELD(bg_select)
-    RETAIN_THEME_FIELD(win_border)
-    RETAIN_THEME_FIELD(menu_background)
-    RETAIN_THEME_FIELD(menu_text)
-    RETAIN_THEME_FIELD(menu_selected_background)
-    RETAIN_THEME_FIELD(menu_selected_text)
-    RETAIN_THEME_FIELD(menu_separator)
-    RETAIN_THEME_FIELD(menu_disabled_text)
-    RETAIN_THEME_FIELD(control_style)
-    RETAIN_THEME_FIELD(title_background)
-    RETAIN_THEME_FIELD(title_text)
-    RETAIN_THEME_FIELD(classic_access_text)
-    RETAIN_THEME_FIELD(classic_active_border_background)
-    RETAIN_THEME_FIELD(classic_active_border_text)
-    RETAIN_THEME_FIELD(classic_command_text)
-    RETAIN_THEME_FIELD(classic_disabled_text)
-    RETAIN_THEME_FIELD(classic_menu_background)
-    RETAIN_THEME_FIELD(classic_menu_text)
-    RETAIN_THEME_FIELD(classic_menu_selected_background)
-    RETAIN_THEME_FIELD(classic_menu_selected_text)
-    RETAIN_THEME_FIELD(classic_scrollbar_background)
-    RETAIN_THEME_FIELD(classic_scrollbar_text)
-    RETAIN_THEME_FIELD(syntax_keyword_color)
-    RETAIN_THEME_FIELD(syntax_comment_color)
-    RETAIN_THEME_FIELD(syntax_string_color)
-    RETAIN_THEME_FIELD(syntax_number_color)
-    RETAIN_THEME_FIELD(syntax_preprocessor_color)
-    RETAIN_THEME_FIELD(syntax_type_color)
-    RETAIN_THEME_FIELD(syntax_command_color)
-    RETAIN_THEME_FIELD(syntax_procedure_color)
-    RETAIN_THEME_FIELD(syntax_macro_color)
-    RETAIN_THEME_FIELD(syntax_variable_color)
-    RETAIN_THEME_FIELD(syntax_constant_color)
-    RETAIN_THEME_FIELD(syntax_member_color)
-    RETAIN_THEME_FIELD(syntax_label_color)
-    RETAIN_THEME_FIELD(syntax_object_color)
-    RETAIN_THEME_FIELD(mode)
-    RETAIN_THEME_FIELD(panel_face)
-    RETAIN_THEME_FIELD(accent_secondary)
-    RETAIN_THEME_FIELD(visual_style)
-    #undef RETAIN_THEME_FIELD
-    Return themeKey
+    Dim As GUI_RetainedPaletteFields fields
+    gui_RetainedFillPalette themePalette, fields
+    Dim As String result = String(SizeOf(fields), 0)
+    If Len(result) <> SizeOf(fields) Then
+        gui_InvalidateAll
+        Return ""
+    End If
+    memcpy StrPtr(result), @fields.values(0), SizeOf(fields)
+    Return result
 End Function
 
+' These observations are native MKLongInt bytes, not hashes or raw GUI_Theme
+' structures. Compare only named fields so padding cannot hide a visual change.
+' All pointers are borrowed for the current read-only GUI-thread call.
+Private Function gui_RetainedThemeMatches(ByRef key As Const String) As Integer
+    Const paletteBytes As Integer = 46 * SizeOf(LongInt)
+    Const scalarBytes As Integer = SizeOf(LongInt)
+    ' Font generation, named palette fields, shadow and 3D flags, in order.
+    If Len(key) <> paletteBytes + 3 * SizeOf(LongInt) Then Return 0
+    Dim As GUI_RetainedPaletteFields fields
+    gui_RetainedFillPalette current_theme, fields
+    Dim As LongInt generation = CLngInt(backend_GetFontGeneration())
+    Dim As LongInt shadowValue = theme_GetClassicShadow()
+    Dim As LongInt threeDValue = theme_GetClassicThreeD()
+    If oma_BytesEqual(StrPtr(key), @generation, scalarBytes) = 0 Then Return 0
+    If oma_BytesEqual(StrPtr(key) + scalarBytes, @fields.values(0), paletteBytes) = 0 Then Return 0
+    If oma_BytesEqual(StrPtr(key) + scalarBytes + paletteBytes, @shadowValue, scalarBytes) = 0 Then Return 0
+    Return oma_BytesEqual(StrPtr(key) + 2 * scalarBytes + paletteBytes, @threeDValue, scalarBytes)
+End Function
+
+Private Sub gui_RetainedFillPrefix(ByVal w As Widget Ptr, ByVal clipX As Integer, _
+    ByVal clipY As Integer, ByVal clipWidth As Integer, ByVal clipHeight As Integer, _
+    ByRef fields As GUI_RetainedPrefixFields)
+    fields.values(0) = clipX
+    fields.values(1) = clipY
+    fields.values(2) = clipWidth
+    fields.values(3) = clipHeight
+    fields.values(4) = w->een
+    fields.values(5) = w->has_focus
+    fields.values(6) = gui_KeyboardFocusVisible
+    ' Widen through the native unsigned width. ARM32 cannot cast a pointer
+    ' directly to LongInt; the retained key still stores an eight-byte value.
+    fields.values(7) = CLngInt(CUInt(w->render))
+End Sub
+
+Private Function gui_RetainedPrefixMatches(ByVal w As Widget Ptr, _
+    ByVal themePalette As Const GUI_Theme Ptr, ByVal clipX As Integer, ByVal clipY As Integer, _
+    ByVal clipWidth As Integer, ByVal clipHeight As Integer, ByVal offset As Integer) As Integer
+    Const halfBytes As Integer = 4 * SizeOf(LongInt)
+    Const paletteBytes As Integer = 46 * SizeOf(LongInt)
+    Dim As Integer observedPaletteBytes = IIf(themePalette = 0, 0, paletteBytes)
+    If w = 0 Then Return 0
+    If offset <> halfBytes * 2 + observedPaletteBytes OrElse offset > Len(w->retained_key) Then Return 0
+    Dim As GUI_RetainedPrefixFields fields
+    gui_RetainedFillPrefix w, clipX, clipY, clipWidth, clipHeight, fields
+    If oma_BytesEqual(StrPtr(w->retained_key), @fields.values(0), halfBytes) = 0 Then Return 0
+    If themePalette <> 0 Then
+        Dim As GUI_RetainedPaletteFields paletteFields
+        gui_RetainedFillPalette *themePalette, paletteFields
+        If oma_BytesEqual(StrPtr(w->retained_key) + halfBytes, @paletteFields.values(0), paletteBytes) = 0 Then Return 0
+    End If
+    ' The comparison returns a boolean; stack addresses do not escape.
+    Return oma_BytesEqual(StrPtr(w->retained_key) + halfBytes + observedPaletteBytes, @fields.values(4), halfBytes)
+End Function
+
+Private Function gui_RetainedPrefixKey(ByVal w As Widget Ptr, _
+    ByVal themePalette As Const GUI_Theme Ptr, ByVal clipX As Integer, ByVal clipY As Integer, _
+    ByVal clipWidth As Integer, ByVal clipHeight As Integer) As String
+    Const halfBytes As Integer = 4 * SizeOf(LongInt)
+    Const paletteBytes As Integer = 46 * SizeOf(LongInt)
+    Dim As Integer observedPaletteBytes = IIf(themePalette = 0, 0, paletteBytes)
+    If w = 0 Then Return ""
+    Dim As GUI_RetainedPrefixFields fields
+    gui_RetainedFillPrefix w, clipX, clipY, clipWidth, clipHeight, fields
+    Dim As String result = String(halfBytes * 2 + observedPaletteBytes, 0)
+    If Len(result) <> halfBytes * 2 + observedPaletteBytes Then
+        gui_InvalidateAll
+        Return ""
+    End If
+    memcpy StrPtr(result), @fields.values(0), halfBytes
+    If themePalette <> 0 Then
+        Dim As GUI_RetainedPaletteFields paletteFields
+        gui_RetainedFillPalette *themePalette, paletteFields
+        memcpy StrPtr(result) + halfBytes, @paletteFields.values(0), paletteBytes
+    End If
+    memcpy StrPtr(result) + halfBytes + observedPaletteBytes, @fields.values(4), halfBytes
+    Return result
+End Function
+
+' -------------------------------------------------------------------------
+' Retained frame preparation
+' -------------------------------------------------------------------------
 Function gui_PrepareRetainedFrame() As Integer
     Dim As Integer screenWidth, screenHeight
     backend_GetSize screenWidth, screenHeight
     gui_ResolveLayout
-    Dim As String themeKey
-    ' Palette and font replacements can affect every widget, including
-    ' controls whose own content key has not changed.
-    themeKey = MKLongInt(backend_GetFontGeneration()) & gui_RetainedPaletteKey(current_theme) & _
-        MKLongInt(theme_GetClassicShadow()) & MKLongInt(theme_GetClassicThreeD())
-    If screenWidth <> gui_RetainedWidth OrElse screenHeight <> gui_RetainedHeight _
-       OrElse themeKey <> gui_RetainedTheme Then gui_InvalidateAll
+    Dim As Integer themeChanged
+    If gui_RetainedThemeMatches(gui_RetainedTheme) = 0 Then
+        Dim As String themeKey = MKLongInt(backend_GetFontGeneration()) & gui_RetainedPaletteKey(current_theme) & _
+            MKLongInt(theme_GetClassicShadow()) & MKLongInt(theme_GetClassicThreeD())
+        themeChanged = IIf(themeKey <> gui_RetainedTheme, -1, 0)
+        gui_RetainedTheme = themeKey
+    End If
+    If screenWidth <> gui_RetainedWidth OrElse screenHeight <> gui_RetainedHeight OrElse themeChanged <> 0 Then gui_InvalidateAll
     gui_RetainedWidth = screenWidth
     gui_RetainedHeight = screenHeight
-    gui_RetainedTheme = themeKey
     Dim As Widget Ptr w = widget_list_head
     While w <> 0
         Dim As String key
@@ -221,27 +322,24 @@ Function gui_PrepareRetainedFrame() As Integer
             If w->is_window <> 0 AndAlso boundsValid = 0 Then gui_InvalidateAll
             Dim As Integer clipX, clipY, clipWidth, clipHeight
             gui_GetWidgetRenderClip w, clipX, clipY, clipWidth, clipHeight
-            key = MKLongInt(clipX) & MKLongInt(clipY) & _
-                MKLongInt(clipWidth) & MKLongInt(clipHeight)
+            Dim As Const GUI_Theme Ptr ownerPalette
             Dim As Widget Ptr owner = w
             Dim As Integer ownerDepth
             While owner <> 0 AndAlso ownerDepth < GUI_LAYOUT_PARENT_GUARD
                 If owner->theme_override_enabled <> 0 Then
-                    key &= gui_RetainedPaletteKey(owner->theme_override)
+                    ownerPalette = @owner->theme_override
                     Exit While
                 End If
                 If owner->appearance <> 0 Then
-                    key &= gui_RetainedPaletteKey(*owner->appearance)
+                    ownerPalette = owner->appearance
                     Exit While
                 End If
                 owner = owner->parent
                 ownerDepth += 1
             Wend
-            ' Convert addresses through the native integer width first. ARM32
-            ' rejects a direct pointer-to-LongInt cast; cache fields stay 8 bytes.
-            key &= MKLongInt(w->een) & MKLongInt(w->has_focus) & _
-                MKLongInt(gui_KeyboardFocusVisible) & MKLongInt(CLngInt(CUInt(w->render)))
-            observationOffset = Len(key)
+            observationOffset = 8 * SizeOf(LongInt)
+            If ownerPalette <> 0 Then observationOffset += 46 * SizeOf(LongInt)
+            If w->render_observation = 0 Then key = gui_RetainedPrefixKey(w, ownerPalette, clipX, clipY, clipWidth, clipHeight)
             If w->render_observation <> 0 Then
                 If w->retained_valid <> 0 AndAlso _
                    w->render_observation_match <> 0 AndAlso _
@@ -251,10 +349,15 @@ Function gui_PrepareRetainedFrame() As Integer
                    w->retained_w = w->w AndAlso w->retained_h = w->h AndAlso _
                    observationOffset = w->retained_observation_offset AndAlso _
                    observationOffset <= Len(w->retained_key) Then
-                    If oma_BytesEqual(StrPtr(key), StrPtr(w->retained_key), observationOffset) <> 0 Then _
+                    If gui_RetainedPrefixMatches(w, ownerPalette, clipX, clipY, clipWidth, clipHeight, observationOffset) <> 0 Then _
                         observationMatched = w->render_observation_match(w, w->retained_key, observationOffset)
                 End If
-                If observationMatched = 0 Then key &= w->render_observation(w)
+                If observationMatched = 0 Then
+                    key = gui_RetainedPrefixKey(w, ownerPalette, clipX, clipY, clipWidth, clipHeight)
+                    ' Decline later reuse if allocation could not preserve the prefix.
+                    If Len(key) <> observationOffset Then observationOffset = -1
+                    key &= w->render_observation(w)
+                End If
             End If
         End If
         Dim As Integer changed = IIf(w->retained_valid = 0 OrElse _
@@ -310,6 +413,9 @@ Function gui_PrepareRetainedFrame() As Integer
     Return gui_DamageCount
 End Function
 
+' -------------------------------------------------------------------------
+' Damage list consumption
+' -------------------------------------------------------------------------
 Sub gui_GetDamageRect(ByVal index As Integer, ByRef x As Integer, _
     ByRef y As Integer, ByRef widthValue As Integer, ByRef heightValue As Integer)
     x = 0: y = 0: widthValue = 0: heightValue = 0

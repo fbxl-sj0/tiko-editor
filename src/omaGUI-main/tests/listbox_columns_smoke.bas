@@ -3,15 +3,7 @@
     File: listbox_columns_smoke.bas
     Purpose: Verify column layout through public list operations and input.
     Responsibilities: Check hit testing, scrolling, clipping and mode changes.
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
-    This file intentionally does NOT contain: Windows control or drawing APIs.
+    This file intentionally does NOT use Windows control or drawing APIs.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY

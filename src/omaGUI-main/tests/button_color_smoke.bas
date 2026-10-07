@@ -14,14 +14,6 @@
         - distinguish a literal black override from theme-driven rendering
         - clear the override through the checked public API
 
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
     This file intentionally does NOT contain:
 
         - pointer or keyboard activation checks

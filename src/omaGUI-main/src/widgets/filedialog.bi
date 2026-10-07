@@ -4,6 +4,9 @@
 
     File: filedialog.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for filedialog.
+
     Purpose:
 
         Declare the file dialog widget interface.
@@ -16,14 +19,6 @@
         - expose an optional save mode with a caller-supplied default name
         - provide portable case-insensitive wildcard filters
         - allow a bounded application-supplied window title
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the filedialog component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 

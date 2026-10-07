@@ -3,15 +3,7 @@
     File: raster_ico_smoke.bas
     Purpose: Check classic icon decoding and retained PictureBox image ownership.
     Responsibilities: Exercise masks, padded rows, malformed spans, and live redraw.
-    Targets:
-
-        The FreeBASIC compiler and host selected by the omaGUI smoke-test suite.
-
-    Module API:
-
-        Standalone smoke-test entry point; this file exposes no reusable library API.
-
-    This file intentionally does NOT contain: a second image decoder.
+    This file intentionally does NOT contain a second image decoder.
 '/
 #lang "fb"
 #define OMAGUI_IMPLEMENTATION

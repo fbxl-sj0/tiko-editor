@@ -8,23 +8,10 @@
 
         Store one generated bitmap font for the omaGUI renderer.
 
-    Responsibilities:
-
-        - own printable-ASCII glyph alpha data for Arial 10 regular
-        - initialize the bounded glyph-pointer lookup table
-
     Source font:
 
         C:\Windows\Fonts\arial.ttf
         point size 10
-
-    Targets:
-
-        FreeBASIC include data; glyph tables require no operating-system font API at runtime.
-
-    Module API:
-
-        Defines font_arial_10_regular_chars and font_arial_10_regular_init_pointers for the font subsystem.
 
     This file intentionally does NOT contain:
 

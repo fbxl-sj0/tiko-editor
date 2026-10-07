@@ -4,6 +4,9 @@
 
     File: combobox.bi
 
+    Targets: FreeBASIC fb dialect; the including application selects the native backend.
+    Module API: omaGUI declarations and implementation for combobox.
+
     Purpose:
 
         Declare a bounded classic ComboBox with DropDown and Simple layouts.
@@ -17,14 +20,6 @@
         - expose user activity without conflating it with programmatic state
         - retain optional normal client and text colors
         - keep application item values attached to rows during mutations
-
-    Targets:
-
-        FreeBASIC builds with built-in gfxlib; gfxlib3 is optional when supplied by the compiler.
-
-    Module API:
-
-        Declarations for the combobox component in the omaGUI include graph.
 
     This file intentionally does NOT contain:
 
