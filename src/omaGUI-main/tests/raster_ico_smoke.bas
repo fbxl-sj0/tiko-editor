@@ -3,7 +3,11 @@
     File: raster_ico_smoke.bas
     Purpose: Check classic icon decoding and retained PictureBox image ownership.
     Responsibilities: Exercise masks, padded rows, malformed spans, and live redraw.
-    This file intentionally does NOT contain a second image decoder.
+    This file intentionally does NOT contain:
+        a second image decoder.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 #lang "fb"
 #define OMAGUI_IMPLEMENTATION

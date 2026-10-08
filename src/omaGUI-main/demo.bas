@@ -22,6 +22,9 @@
         - application persistence
         - platform-specific graphics calls
         - test-only input injection
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone widget demonstration using the public toolkit.
 '/
 
 #lang "fb"

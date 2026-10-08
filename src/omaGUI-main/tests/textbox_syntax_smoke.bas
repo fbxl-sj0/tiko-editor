@@ -26,6 +26,9 @@
         - parser validation or compiler diagnostics
         - editor input and selection behavior
         - application-specific IDE policy
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #lang "fb"

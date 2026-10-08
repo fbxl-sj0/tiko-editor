@@ -8,6 +8,9 @@
         - check optional arrows, reversed direction, and signed 32-bit bounds
     This file intentionally does NOT contain:
         - VBDOS event dispatch or application-specific scrolling
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #lang "fb"

@@ -3,7 +3,11 @@
     File: chmarchive_real_smoke.bas
     Purpose: Read a member from a real CHM help archive.
     Responsibilities: Check directory parsing and bounded member decoding.
-    This file intentionally does NOT contain HTML layout or extraction.
+    This file intentionally does NOT contain:
+        HTML layout or extraction.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #lang "fb"

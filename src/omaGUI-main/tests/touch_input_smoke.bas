@@ -3,7 +3,11 @@
     File: touch_input_smoke.bas
     Purpose: Check bounded touch contacts and compatibility pointer behavior.
     Responsibilities: Exercise stable IDs, dispatch masks, and final release.
-    This file intentionally does NOT contain platform touch hardware setup.
+    This file intentionally does NOT contain:
+        platform touch hardware setup.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY

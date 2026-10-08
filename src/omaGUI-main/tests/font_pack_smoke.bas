@@ -4,7 +4,11 @@
     Purpose: Verify editor font packs and UTF-8 text in the combined backend.
     Responsibilities: Check font slots, fallback, replacement, clearing and
         rejected loads without retaining stale ASCII metrics.
-    This file intentionally does NOT contain widget or application behavior.
+    This file intentionally does NOT contain:
+        widget or application behavior.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY

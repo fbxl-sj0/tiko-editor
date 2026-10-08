@@ -18,6 +18,9 @@
 
         - selection-highlight color customization
         - filesystem enumeration or pointer-input checks
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #lang "fb"

@@ -17,6 +17,9 @@
         - application help navigation
         - alternate parser or renderer implementations
         - platform-native rich edit controls
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #lang "fb"

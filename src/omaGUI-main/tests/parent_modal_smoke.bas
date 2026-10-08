@@ -18,6 +18,9 @@
         - application-specific editor behavior
         - filesystem dialog tests
         - renderer snapshot comparisons
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #lang "fb"

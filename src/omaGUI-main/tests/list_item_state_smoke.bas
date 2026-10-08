@@ -4,7 +4,11 @@
     Purpose: Verify row identity, replacement and checked scroll operations.
     Responsibilities: test both list providers through their public APIs,
         including portable 64-bit values, aliasing and failed mutations.
-    This file intentionally does not contain VB runtime or operating-system APIs.
+    This file intentionally does NOT contain:
+        VB runtime or operating-system APIs.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY

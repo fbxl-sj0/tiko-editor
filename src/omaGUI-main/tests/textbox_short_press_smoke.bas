@@ -2,8 +2,12 @@
     Project: omaGUI qualification. File: textbox_short_press_smoke.bas.
     Purpose: Retain editing and navigation presses released between GUI polls.
     Responsibilities: Check edits, one-frame consumption and callback precedence.
-    This file does not inject operating-system input or modify user documents.
+    This file intentionally does NOT contain:
+        inject operating-system input or modify user documents.
     All GUI and mock input calls run on the fixture's main thread.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 #lang "fb"
 #define OMAGUI_IMPLEMENTATION

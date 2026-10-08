@@ -3,7 +3,11 @@
     File: menu_display_text_smoke.bas
     Purpose: Verify exact display captions and ordinary text transformation.
     Responsibilities: Check translation collisions, item metadata and bounds.
-    This file does not write settings, open documents or automate desktop input.
+    This file intentionally does NOT contain:
+        write settings, open documents or automate desktop input.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 #lang "fb"
 #define OMAGUI_IMPLEMENTATION

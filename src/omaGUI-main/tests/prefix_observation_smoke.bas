@@ -2,8 +2,12 @@
     Project: omaGUI tests. File: prefix_observation_smoke.bas.
     Purpose: Compare retained themePalette/prefix matching with legacy serialization.
     Responsibilities: Check exact bytes, all fields and malformed lengths.
-    This file does not draw, invoke dummy callbacks or write user data.
+    This file intentionally does NOT contain:
+        draw, invoke dummy callbacks or write user data.
     Local widgets and palettes outlive every borrowed-byte comparison.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 #lang "fb"
 #define OMAGUI_IMPLEMENTATION

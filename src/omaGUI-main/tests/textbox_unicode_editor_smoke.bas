@@ -4,7 +4,11 @@
     Purpose: Check editor callbacks and UTF-8 cursor operations.
     Responsibilities: Exercise typed hooks, whole-character navigation,
         deletion, and malformed-byte progress in drawable headless mode.
-    This file intentionally does NOT contain platform text-input policy.
+    This file intentionally does NOT contain:
+        platform text-input policy.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #lang "fb"

@@ -3,8 +3,12 @@
     Purpose: Preserve callback lifetimes while avoiding idle registry scans.
     Responsibilities: Check self-replacement, sibling removal and new registrations;
         count real lifetime lookups in a bounded hidden-widget idle workload.
-    This file does not operate system input, draw a user window or save documents.
+    This file intentionally does NOT contain:
+        operate system input, draw a user window or save documents.
     The fixture and all registry callbacks belong to the same GUI thread.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 #lang "fb"
 #define OMAGUI_IMPLEMENTATION

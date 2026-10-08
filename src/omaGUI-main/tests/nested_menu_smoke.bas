@@ -16,6 +16,9 @@
     This file intentionally does NOT contain:
         - application-specific menu commands
         - native operating-system menu calls
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #lang "fb"

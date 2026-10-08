@@ -3,7 +3,11 @@
     File: htmlview_resource_smoke.bas
     Purpose: Check application-owned linked stylesheets and anchors.
     Responsibilities: Resolve one virtual stylesheet during staged layout.
-    This file intentionally does NOT contain networking or disk resources.
+    This file intentionally does NOT contain:
+        networking or disk resources.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #lang "fb"

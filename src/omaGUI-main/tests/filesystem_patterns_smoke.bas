@@ -8,6 +8,9 @@
         - create and remove only this test's private fixture paths
     This file intentionally does NOT contain:
         - platform SDK calls, recursive cleanup, or VB runtime dependencies
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #lang "fb"

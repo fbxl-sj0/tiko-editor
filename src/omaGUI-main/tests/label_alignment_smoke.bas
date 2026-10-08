@@ -12,6 +12,9 @@
         - verify mnemonic placement and the caller's clip after rendering
     This file intentionally does NOT contain:
         - operating-system GUI calls or application-specific render callbacks
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #lang "fb"

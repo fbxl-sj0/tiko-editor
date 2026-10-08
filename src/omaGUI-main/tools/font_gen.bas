@@ -22,6 +22,26 @@
         - runtime text drawing logic
         - font selection policy for the renderer
         - Wonderware/System Platform graphics parsing
+
+    Targets:
+
+        - FreeBASIC's fb dialect, with Windows or Unix platform APIs selected
+          by the compiler target.
+        - SDL2 and SDL_ttf are build-time dependencies; Unicode font-pack
+          generation requires SDL_ttf 2.0.18 or newer.
+
+    Resource ownership:
+
+        - This executable owns and closes every SDL font, surface, and file
+          handle it opens.
+        - Disk outputs are staged beside their destinations and installed
+          only after generation succeeds.
+
+    Module API:
+
+        - This standalone executable exports no library API.
+        - Positional arguments generate a FreeBASIC include and optional BMP;
+          --pack generates the binary OGF1 font format.
 '/
 
 #lang "fb"
@@ -45,9 +65,30 @@ Const LAST_GLYPH As Integer = 126
 Const DEFAULT_POINT_SIZE As Integer = 12
 Const ATLAS_COLUMNS As Integer = 16
 Const FONTGEN_MAX_EXTRA_GLYPHS As Integer = 4096
+Const FONTGEN_MAX_CODEPOINT_TEXT_BYTES As Integer = 8
+Const FONTGEN_MAX_NORMALIZED_LIST_BYTES As Integer = _
+    FONTGEN_MAX_EXTRA_GLYPHS * (FONTGEN_MAX_CODEPOINT_TEXT_BYTES + 1)
+Const FONTGEN_ATLAS_CELL_PADDING As Integer = 2
+' SDL_ttf glyph surfaces use four bytes per 32-bit pixel.
+Const FONTGEN_SDL_BYTES_PER_PIXEL As Integer = 4
+' Cap the four-byte preview surface at 64 MiB to avoid unbounded allocation.
+Const FONTGEN_MAX_ATLAS_PIXELS As LongInt = 16777216
+' SDL_Rect coordinates and SDL_CreateRGBSurface dimensions are signed 32-bit.
+Const FONTGEN_MAX_SDL_COORDINATE As LongInt = &H7FFFFFFF
 Const FONT_PACK_HEADER_BYTES As Integer = 20
 Const FONT_PACK_GLYPH_HEADER_BYTES As Integer = 14
 Const FONT_PACK_MAX_CODEPOINT As UInteger = &H10FFFF
+Const FONT_PACK_MAX_BYTE As Integer = 255
+Const FONT_PACK_MAX_WORD As Integer = 65535
+Const FONT_PACK_MIN_SIGNED_WORD As Long = -32768
+Const FONT_PACK_MAX_SIGNED_WORD As Long = 32767
+Const FONT_PACK_C1_CONTROL_MIN As UInteger = &H7F
+Const FONT_PACK_C1_CONTROL_MAX As UInteger = &H9F
+Const FONT_PACK_SURROGATE_MIN As UInteger = &HD800
+Const FONT_PACK_SURROGATE_MAX As UInteger = &HDFFF
+Const FONTGEN_MIN_SDL_TTF_MAJOR As Integer = 2
+Const FONTGEN_MIN_SDL_TTF_MINOR As Integer = 0
+Const FONTGEN_MIN_SDL_TTF_PATCH As Integer = 18
 ' Keep generated packs within the runtime loader's allocation limits.
 Const FONT_PACK_MAX_BYTES As ULongInt = 67108864
 ' Includes every scalar after excluding UTF-8 controls and surrogates.
@@ -90,7 +131,7 @@ End Extern
 ' Output helpers
 ' -------------------------------------------------------------------------
 
-Function FontPackCreateTemporaryFile( _
+Function FontGenCreateTemporaryFile( _
     ByRef output_path As String, ByRef temporary_path As String _
 ) As Integer
 
@@ -135,13 +176,13 @@ Function FontPackCreateTemporaryFile( _
 
 End Function
 
-Function FontPackRemoveTemporaryFile(ByRef temporary_path As String) As Integer
+Function FontGenRemoveTemporaryFile(ByRef temporary_path As String) As Integer
     If Len(temporary_path) = 0 OrElse Len(Dir(temporary_path)) = 0 Then _
         Return -1
     Return (remove(temporary_path) = 0)
 End Function
 
-Function FontPackInstallTemporaryFile( _
+Function FontGenInstallTemporaryFile( _
     ByRef temporary_path As String, ByRef output_path As String _
 ) As Integer
 
@@ -181,9 +222,12 @@ Function ReadExtraGlyphList( _
 ) As Integer
 
     Dim As Integer file_number
+    Dim As Integer normalized_length = 0
+    Dim As Integer required_length
     Dim As UInteger previous_codepoint = LAST_GLYPH
     Dim As UInteger codepoint
     Dim As String line_text
+    Dim As String codepoint_text
 
     normalized_list = ""
     glyph_count = 0
@@ -194,6 +238,7 @@ Function ReadExtraGlyphList( _
         Print "ERROR: Could not open Unicode code point list " & list_path
         Return 0
     End If
+    normalized_list = Space(FONTGEN_MAX_NORMALIZED_LIST_BYTES)
 
     While Not Eof(file_number)
         Line Input #file_number, line_text
@@ -204,8 +249,10 @@ Function ReadExtraGlyphList( _
         codepoint = CUInt(ValInt(line_text))
         If codepoint <= LAST_GLYPH OrElse _
            codepoint > FONT_PACK_MAX_CODEPOINT OrElse _
-           (codepoint >= &H7F AndAlso codepoint <= &H9F) OrElse _
-           (codepoint >= &HD800 AndAlso codepoint <= &HDFFF) Then
+           (codepoint >= FONT_PACK_C1_CONTROL_MIN AndAlso _
+            codepoint <= FONT_PACK_C1_CONTROL_MAX) OrElse _
+           (codepoint >= FONT_PACK_SURROGATE_MIN AndAlso _
+            codepoint <= FONT_PACK_SURROGATE_MAX) Then
             Close #file_number
             Print "ERROR: Invalid Unicode scalar code point: " & line_text
             Return 0
@@ -221,13 +268,36 @@ Function ReadExtraGlyphList( _
             Return 0
         End If
 
-        If glyph_count > 0 Then normalized_list &= Chr(10)
-        normalized_list &= Str(codepoint)
+        codepoint_text = Str(codepoint)
+        If Len(codepoint_text) > FONTGEN_MAX_CODEPOINT_TEXT_BYTES Then
+            Close #file_number
+            Print "ERROR: Unicode code point text exceeds its limit."
+            Return 0
+        End If
+        required_length = Len(codepoint_text)
+        If glyph_count > 0 Then required_length += 1
+        If required_length > Len(normalized_list) - normalized_length Then
+            Close #file_number
+            Print "ERROR: Normalized Unicode code point list exceeds its limit."
+            Return 0
+        End If
+        If glyph_count > 0 Then
+            Mid(normalized_list, normalized_length + 1, 1) = Chr(10)
+            normalized_length += 1
+        End If
+        Mid(normalized_list, normalized_length + 1, Len(codepoint_text)) = _
+            codepoint_text
+        normalized_length += Len(codepoint_text)
         previous_codepoint = codepoint
         glyph_count += 1
     Wend
 
     Close #file_number
+    If normalized_length > 0 Then
+        normalized_list = Left(normalized_list, normalized_length)
+    Else
+        normalized_list = ""
+    End If
     Return -1
 
 End Function
@@ -244,12 +314,12 @@ Function NextExtraGlyph( _
     If list_position > Len(normalized_list) Then Return 0
     line_end = InStr(list_position, normalized_list, Chr(10))
     If line_end = 0 Then
-        codepoint = ValInt(Mid(normalized_list, list_position))
+        codepoint = CUInt(ValInt(Mid(normalized_list, list_position)))
         list_position = Len(normalized_list) + 1
     Else
-        codepoint = ValInt(Mid( _
+        codepoint = CUInt(ValInt(Mid( _
             normalized_list, list_position, line_end - list_position _
-        ))
+        )))
         list_position = line_end + 1
     End If
 
@@ -376,9 +446,14 @@ Sub EmitGlyphData(ByVal file_number As Integer, _
     Dim suffix_text As String
     Dim output_position As Integer
 
-    If surface = 0 OrElse surface->pixels = 0 Then Exit Sub
+    If surface = 0 Then Exit Sub
+    If surface->pixels = 0 Then Exit Sub
+    If surface->format = 0 OrElse _
+       surface->format->BytesPerPixel <> FONTGEN_SDL_BYTES_PER_PIXEL OrElse _
+       surface->format->Amask = 0 Then Exit Sub
     If surface->w <= 0 OrElse surface->h <= 0 Then Exit Sub
-    If surface->pitch < surface->w * SizeOf(ULong) Then Exit Sub
+    If CLngInt(surface->pitch) < _
+       CLngInt(surface->w) * FONTGEN_SDL_BYTES_PER_PIXEL Then Exit Sub
 
     EmitLine file_number, use_file, "' Font data for Unicode code point " & _
              Trim(Str(character_code))
@@ -388,6 +463,7 @@ Sub EmitGlyphData(ByVal file_number As Integer, _
              Str(surface->h) & ", _"
 
     pixels = surface->pixels
+    If pixels = 0 Then Exit Sub
 
     For y As Integer = 0 To surface->h - 1
         ' Three alpha digits, one comma, and the line suffix bound each pixel.
@@ -400,7 +476,8 @@ Sub EmitGlyphData(ByVal file_number As Integer, _
                 ULong Ptr, _
                 pixels + (y * surface->pitch) + (x * SizeOf(ULong)) _
             )
-            alpha = (pixel_value Shr 24) And &HFF
+            alpha = CUByte((pixel_value Shr surface->format->Ashift) And _
+                FONT_PACK_MAX_BYTE)
             If x < surface->w - 1 Or y < surface->h - 1 Then
                 pixel_text = Trim(Str(alpha)) & ","
             Else
@@ -505,33 +582,52 @@ Function SaveAtlas(ByVal font As TTF_Font Ptr, _
                    ByRef atlas_path As String, _
                    ByVal max_width As Integer, _
                    ByVal max_height As Integer) As Integer
-    Dim rows As Integer
-    Dim cell_width As Integer
-    Dim cell_height As Integer
-    Dim atlas_width As Integer
-    Dim atlas_height As Integer
+    Dim rows As LongInt
+    Dim cell_width As LongInt
+    Dim cell_height As LongInt
+    Dim atlas_width As LongInt
+    Dim atlas_height As LongInt
+    Dim destination_x As LongInt
+    Dim destination_y As LongInt
     Dim atlas As SDL_Surface Ptr
     Dim glyph As SDL_Surface Ptr
     Dim dest As SDL_Rect
     Dim white As SDL_Color
     Dim black As ULong
+    Dim As String temporary_path
 
     If Len(atlas_path) = 0 Then
         Return -1
     End If
-
-    rows = ((LAST_GLYPH - FIRST_GLYPH + 1) + ATLAS_COLUMNS - 1) \ ATLAS_COLUMNS
-    cell_width = max_width + 4
-    cell_height = max_height + 4
-    atlas_width = ATLAS_COLUMNS * cell_width
-    atlas_height = rows * cell_height
-
-    If cell_width < 4 Or cell_height < 4 Then
-        Print "ERROR: Invalid atlas cell dimensions."
+    If max_width < 0 OrElse max_height < 0 Then
+        Print "ERROR: Invalid atlas glyph dimensions."
         Return 0
     End If
 
-    atlas = SDL_CreateRGBSurface(0, atlas_width, atlas_height, 32, _
+    rows = ((CLngInt(LAST_GLYPH) - FIRST_GLYPH + 1) + _
+        ATLAS_COLUMNS - 1) \ ATLAS_COLUMNS
+    cell_width = CLngInt(max_width) + (FONTGEN_ATLAS_CELL_PADDING * 2)
+    cell_height = CLngInt(max_height) + (FONTGEN_ATLAS_CELL_PADDING * 2)
+    atlas_width = CLngInt(ATLAS_COLUMNS) * cell_width
+    atlas_height = rows * cell_height
+
+    If cell_width < (FONTGEN_ATLAS_CELL_PADDING * 2) OrElse _
+       cell_height < (FONTGEN_ATLAS_CELL_PADDING * 2) Then
+        Print "ERROR: Invalid atlas cell dimensions."
+        Return 0
+    End If
+    If atlas_width <= 0 OrElse atlas_height <= 0 OrElse _
+       atlas_width > FONTGEN_MAX_SDL_COORDINATE OrElse _
+       atlas_height > FONTGEN_MAX_SDL_COORDINATE Then
+        Print "ERROR: Atlas dimensions exceed the SDL limits."
+        Return 0
+    End If
+    If atlas_width > FONTGEN_MAX_ATLAS_PIXELS \ atlas_height Then
+        Print "ERROR: Atlas dimensions exceed the supported memory limit."
+        Return 0
+    End If
+
+    atlas = SDL_CreateRGBSurface(0, CInt(atlas_width), CInt(atlas_height), 32, _
                                  &H00FF0000, &H0000FF00, &H000000FF, _
                                  &HFF000000)
     If atlas = 0 Then
@@ -552,8 +648,19 @@ Function SaveAtlas(ByVal font As TTF_Font Ptr, _
 
         If glyph <> 0 Then
             SDL_SetSurfaceBlendMode(glyph, FONTGEN_BLENDMODE_BLEND)
-            dest.x = ((i - FIRST_GLYPH) Mod ATLAS_COLUMNS) * cell_width + 2
-            dest.y = ((i - FIRST_GLYPH) \ ATLAS_COLUMNS) * cell_height + 2
+            destination_x = ((CLngInt(i) - FIRST_GLYPH) Mod ATLAS_COLUMNS) * _
+                cell_width + FONTGEN_ATLAS_CELL_PADDING
+            destination_y = ((CLngInt(i) - FIRST_GLYPH) \ ATLAS_COLUMNS) * _
+                cell_height + FONTGEN_ATLAS_CELL_PADDING
+            If destination_x < 0 OrElse destination_x >= atlas_width OrElse _
+               destination_y < 0 OrElse destination_y >= atlas_height Then
+                Print "ERROR: Atlas glyph coordinates exceed the surface bounds."
+                SDL_FreeSurface(glyph)
+                SDL_FreeSurface(atlas)
+                Return 0
+            End If
+            dest.x = Cast(Sint32, destination_x)
+            dest.y = Cast(Sint32, destination_y)
             dest.w = glyph->w
             dest.h = glyph->h
             SDL_BlitSurface(glyph, 0, atlas, @dest)
@@ -561,8 +668,24 @@ Function SaveAtlas(ByVal font As TTF_Font Ptr, _
         End If
     Next i
 
-    If SDL_SaveBMP(atlas, atlas_path) <> 0 Then
+    If FontGenCreateTemporaryFile(atlas_path, temporary_path) = 0 Then
+        Print "ERROR: Could not create a temporary atlas beside " & atlas_path
+        SDL_FreeSurface(atlas)
+        Return 0
+    End If
+
+    If SDL_SaveBMP(atlas, temporary_path) <> 0 Then
         Print "ERROR: Could not save atlas " & atlas_path
+        If FontGenRemoveTemporaryFile(temporary_path) = 0 Then _
+            Print "WARNING: Could not remove temporary atlas " & temporary_path
+        SDL_FreeSurface(atlas)
+        Return 0
+    End If
+
+    If FontGenInstallTemporaryFile(temporary_path, atlas_path) = 0 Then
+        Print "ERROR: Could not replace atlas output " & atlas_path
+        If FontGenRemoveTemporaryFile(temporary_path) = 0 Then _
+            Print "WARNING: Could not remove temporary atlas " & temporary_path
         SDL_FreeSurface(atlas)
         Return 0
     End If
@@ -590,9 +713,11 @@ Private Function FontPackCodepointIsControl( _
     ByVal codepoint As UInteger _
 ) As Integer
 
-    If codepoint < 32 OrElse _
-       (codepoint >= &H7F AndAlso codepoint <= &H9F) Then Return -1
-    If codepoint >= &HD800 AndAlso codepoint <= &HDFFF Then Return -1
+    If codepoint < FIRST_GLYPH OrElse _
+       (codepoint >= FONT_PACK_C1_CONTROL_MIN AndAlso _
+        codepoint <= FONT_PACK_C1_CONTROL_MAX) Then Return -1
+    If codepoint >= FONT_PACK_SURROGATE_MIN AndAlso _
+       codepoint <= FONT_PACK_SURROGATE_MAX Then Return -1
     Return 0
 
 End Function
@@ -621,8 +746,8 @@ Function GenerateFontPack( _
     Dim As Long min_y
     Dim As Long max_y
     Dim As Long advance
-    Dim As Long bearing_x
-    Dim As Long bearing_y
+    Dim As LongInt bearing_x
+    Dim As LongInt bearing_y
     Dim As UInteger codepoint
     Dim As ULong pixel_value
     Dim As ULongInt pack_size
@@ -638,11 +763,11 @@ Function GenerateFontPack( _
     Dim As String glyph_header
     Dim As String glyph_pixels
 
-    If point_size < 1 OrElse point_size > 255 Then
+    If point_size < 1 OrElse point_size > FONT_PACK_MAX_BYTE Then
         Print "ERROR: Font point size must be from 1 through 255."
         Return 0
     End If
-    If font_face_index < 0 OrElse font_face_index > 65535 Then
+    If font_face_index < 0 OrElse font_face_index > FONT_PACK_MAX_WORD Then
         Print "ERROR: Font face index must be from 0 through 65535."
         Return 0
     End If
@@ -657,10 +782,11 @@ Function GenerateFontPack( _
     End If
 
     linked_version = TTF_Linked_Version()
-    If linked_version = 0 OrElse linked_version->major < 2 OrElse _
-       (linked_version->major = 2 AndAlso linked_version->minor < 0) OrElse _
-       (linked_version->major = 2 AndAlso linked_version->minor = 0 AndAlso _
-        linked_version->patch < 18) Then
+    If linked_version = 0 OrElse _
+       linked_version->major < FONTGEN_MIN_SDL_TTF_MAJOR OrElse _
+       (linked_version->major = FONTGEN_MIN_SDL_TTF_MAJOR AndAlso _
+        linked_version->minor = FONTGEN_MIN_SDL_TTF_MINOR AndAlso _
+        linked_version->patch < FONTGEN_MIN_SDL_TTF_PATCH) Then
         Print "ERROR: Full Unicode font packs require SDL_ttf 2.0.18 or newer."
         TTF_Quit()
         Return 0
@@ -678,15 +804,15 @@ Function GenerateFontPack( _
 
     font_height = TTF_FontHeight(font)
     font_ascent = TTF_FontAscent(font)
-    If font_height < 1 OrElse font_height > 65535 OrElse _
-       font_ascent < 0 OrElse font_ascent > 65535 Then
+    If font_height < 1 OrElse font_height > FONT_PACK_MAX_WORD OrElse _
+       font_ascent < 0 OrElse font_ascent > FONT_PACK_MAX_WORD Then
         Print "ERROR: Font metrics are outside the font-pack format limits."
         TTF_CloseFont(font)
         TTF_Quit()
         Return 0
     End If
 
-    If FontPackCreateTemporaryFile(output_path, temporary_path) = 0 Then
+    If FontGenCreateTemporaryFile(output_path, temporary_path) = 0 Then
         Print "ERROR: Could not create a temporary font pack beside " & output_path
         TTF_CloseFont(font)
         TTF_Quit()
@@ -695,7 +821,7 @@ Function GenerateFontPack( _
     file_number = FreeFile
     If Open(temporary_path For Binary Access Write As #file_number) <> 0 Then
         Print "ERROR: Could not open font pack output " & temporary_path
-        If FontPackRemoveTemporaryFile(temporary_path) = 0 Then _
+        If FontGenRemoveTemporaryFile(temporary_path) = 0 Then _
             Print "WARNING: Could not remove temporary font pack " & temporary_path
         TTF_CloseFont(font)
         TTF_Quit()
@@ -747,14 +873,17 @@ Function GenerateFontPack( _
         End If
 
         If surface->pixels = 0 OrElse surface->format = 0 OrElse _
-           surface->format->BytesPerPixel <> 4 OrElse _
+           surface->format->BytesPerPixel <> FONTGEN_SDL_BYTES_PER_PIXEL OrElse _
            surface->format->Amask = 0 OrElse surface->w < 0 OrElse _
-           surface->h < 0 OrElse surface->w > 255 OrElse _
-           surface->h > 255 OrElse surface->pitch < surface->w * 4 OrElse _
-           advance < 0 OrElse advance > 65535 OrElse _
-           min_x < -32768 OrElse min_x > 32767 OrElse _
-           (font_ascent - max_y) < -32768 OrElse _
-           (font_ascent - max_y) > 32767 Then
+           surface->h < 0 OrElse surface->w > FONT_PACK_MAX_BYTE OrElse _
+           surface->h > FONT_PACK_MAX_BYTE OrElse _
+           CLngInt(surface->pitch) < _
+               CLngInt(surface->w) * FONTGEN_SDL_BYTES_PER_PIXEL OrElse _
+           advance < 0 OrElse advance > FONT_PACK_MAX_WORD OrElse _
+           min_x < FONT_PACK_MIN_SIGNED_WORD OrElse _
+           min_x > FONT_PACK_MAX_SIGNED_WORD OrElse _
+           (font_ascent - max_y) < FONT_PACK_MIN_SIGNED_WORD OrElse _
+           (font_ascent - max_y) > FONT_PACK_MAX_SIGNED_WORD Then
             Print "WARNING: Skipping out-of-range glyph " & Str(codepoint)
             SDL_FreeSurface(surface)
             Continue For
@@ -772,13 +901,20 @@ Function GenerateFontPack( _
         alpha_max_x = -1
         alpha_max_y = -1
         pixels = surface->pixels
+        If pixels = 0 Then
+            Print "WARNING: Could not access pixels for Unicode code point " & _
+                Str(codepoint)
+            SDL_FreeSurface(surface)
+            Continue For
+        End If
         For pixel_y As Integer = 0 To surface->h - 1
             For pixel_x As Integer = 0 To surface->w - 1
                 pixel_value = *Cast( _
                     ULong Ptr, pixels + (pixel_y * surface->pitch) + _
                     (pixel_x * SizeOf(ULong)) _
                 )
-                alpha = (pixel_value Shr surface->format->Ashift) And &HFF
+                alpha = CUByte((pixel_value Shr _
+                    surface->format->Ashift) And FONT_PACK_MAX_BYTE)
                 If alpha = 0 Then Continue For
                 If pixel_x < alpha_min_x Then alpha_min_x = pixel_x
                 If pixel_y < alpha_min_y Then alpha_min_y = pixel_y
@@ -798,13 +934,15 @@ Function GenerateFontPack( _
             bitmap_height = alpha_max_y - alpha_min_y + 1
         End If
 
-        bearing_x = alpha_min_x
+        bearing_x = CLngInt(alpha_min_x)
         If min_x < 0 Then bearing_x += min_x
-        bearing_y = alpha_min_y
+        bearing_y = CLngInt(alpha_min_y)
         If max_y > font_ascent Then _
             bearing_y += font_ascent - max_y
-        If bearing_x < -32768 OrElse bearing_x > 32767 OrElse _
-           bearing_y < -32768 OrElse bearing_y > 32767 Then
+        If bearing_x < FONT_PACK_MIN_SIGNED_WORD OrElse _
+           bearing_x > FONT_PACK_MAX_SIGNED_WORD OrElse _
+           bearing_y < FONT_PACK_MIN_SIGNED_WORD OrElse _
+           bearing_y > FONT_PACK_MAX_SIGNED_WORD Then
             Print "WARNING: Skipping out-of-range glyph " & Str(codepoint)
             SDL_FreeSurface(surface)
             Continue For
@@ -829,7 +967,8 @@ Function GenerateFontPack( _
                     ULong Ptr, pixels + (pixel_y * surface->pitch) + _
                     (pixel_x * SizeOf(ULong)) _
                 )
-                alpha = (pixel_value Shr surface->format->Ashift) And &HFF
+                alpha = CUByte((pixel_value Shr _
+                    surface->format->Ashift) And FONT_PACK_MAX_BYTE)
                 glyph_pixels[pixel_index] = alpha
                 pixel_index += 1
             Next pixel_x
@@ -837,8 +976,8 @@ Function GenerateFontPack( _
 
         glyph_header = FontPackU32(codepoint) & _
             FontPackU16(bitmap_width) & FontPackU16(bitmap_height) & _
-            FontPackU16(advance) & FontPackSigned16(bearing_x) & _
-            FontPackSigned16(bearing_y)
+            FontPackU16(advance) & FontPackSigned16(CLng(bearing_x)) & _
+            FontPackSigned16(CLng(bearing_y))
         Put #file_number, , glyph_header
         If pixel_count > 0 Then Put #file_number, , glyph_pixels
         SDL_FreeSurface(surface)
@@ -851,7 +990,7 @@ Function GenerateFontPack( _
 
     If invalid_pack <> 0 Then
         Close #file_number
-        If FontPackRemoveTemporaryFile(temporary_path) = 0 Then _
+        If FontGenRemoveTemporaryFile(temporary_path) = 0 Then _
             Print "WARNING: Could not remove temporary font pack " & temporary_path
         TTF_CloseFont(font)
         TTF_Quit()
@@ -861,7 +1000,7 @@ Function GenerateFontPack( _
     If glyph_count < 1 Then
         Print "ERROR: The selected font has no renderable glyphs."
         Close #file_number
-        If FontPackRemoveTemporaryFile(temporary_path) = 0 Then _
+        If FontGenRemoveTemporaryFile(temporary_path) = 0 Then _
             Print "WARNING: Could not remove temporary font pack " & temporary_path
         TTF_CloseFont(font)
         TTF_Quit()
@@ -873,9 +1012,9 @@ Function GenerateFontPack( _
     TTF_CloseFont(font)
     TTF_Quit()
 
-    If FontPackInstallTemporaryFile(temporary_path, output_path) = 0 Then
+    If FontGenInstallTemporaryFile(temporary_path, output_path) = 0 Then
         Print "ERROR: Could not replace font pack output " & output_path
-        If FontPackRemoveTemporaryFile(temporary_path) = 0 Then _
+        If FontGenRemoveTemporaryFile(temporary_path) = 0 Then _
             Print "WARNING: Could not remove temporary font pack " & temporary_path
         Return 0
     End If
@@ -903,6 +1042,7 @@ Function GenerateFontData(ByRef font_path As String, _
     Dim unicode_count As Integer
     Dim unicode_position As Integer
     Dim codepoint As UInteger
+    Dim temporary_path As String
 
     If ReadExtraGlyphList( _
         unicode_list_path, unicode_list, unicode_count _
@@ -924,10 +1064,24 @@ Function GenerateFontData(ByRef font_path As String, _
     file_number = 0
 
     If Len(data_output_path) > 0 AndAlso data_output_path <> "-" Then
+        If FontGenCreateTemporaryFile( _
+            data_output_path, temporary_path _
+        ) = 0 Then
+            Print "ERROR: Could not create a temporary font include beside " & _
+                data_output_path
+            TTF_CloseFont(font)
+            TTF_Quit()
+            Return 0
+        End If
+
         file_number = FreeFile
 
-        If Open(data_output_path For Output As #file_number) <> 0 Then
+        ' The helper made this unique empty file; Append preserves its safe path.
+        If Open(temporary_path For Append As #file_number) <> 0 Then
             Print "ERROR: Could not open output file " & data_output_path
+            If FontGenRemoveTemporaryFile(temporary_path) = 0 Then _
+                Print "WARNING: Could not remove temporary font include " & _
+                    temporary_path
             TTF_CloseFont(font)
             TTF_Quit()
             Return 0
@@ -972,6 +1126,9 @@ Function GenerateFontData(ByRef font_path As String, _
                 Str(codepoint)
             If use_file <> 0 Then
                 Close #file_number
+                If FontGenRemoveTemporaryFile(temporary_path) = 0 Then _
+                    Print "WARNING: Could not remove temporary font include " & _
+                        temporary_path
             End If
             TTF_CloseFont(font)
             TTF_Quit()
@@ -983,6 +1140,9 @@ Function GenerateFontData(ByRef font_path As String, _
                 Str(codepoint)
             If use_file <> 0 Then
                 Close #file_number
+                If FontGenRemoveTemporaryFile(temporary_path) = 0 Then _
+                    Print "WARNING: Could not remove temporary font include " & _
+                        temporary_path
             End If
             TTF_CloseFont(font)
             TTF_Quit()
@@ -1003,6 +1163,11 @@ Function GenerateFontData(ByRef font_path As String, _
     End If
 
     If SaveAtlas(font, atlas_output_path, max_width, max_height) = 0 Then
+        If use_file <> 0 Then
+            If FontGenRemoveTemporaryFile(temporary_path) = 0 Then _
+                Print "WARNING: Could not remove temporary font include " & _
+                    temporary_path
+        End If
         TTF_CloseFont(font)
         TTF_Quit()
         Return 0
@@ -1010,6 +1175,19 @@ Function GenerateFontData(ByRef font_path As String, _
 
     TTF_CloseFont(font)
     TTF_Quit()
+
+    If use_file <> 0 Then
+        If FontGenInstallTemporaryFile( _
+            temporary_path, data_output_path _
+        ) = 0 Then
+            Print "ERROR: Could not replace font include output " & _
+                data_output_path
+            If FontGenRemoveTemporaryFile(temporary_path) = 0 Then _
+                Print "WARNING: Could not remove temporary font include " & _
+                    temporary_path
+            Return 0
+        End If
+    End If
 
     Return -1
 End Function

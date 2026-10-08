@@ -10,6 +10,9 @@
         - accept null widgets and released private data during update
     This file intentionally does NOT contain:
         - host window APIs, allocator instrumentation, or VBDOS event handling
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 #lang "fb"
 #define OMAGUI_PORTABLE_ONLY

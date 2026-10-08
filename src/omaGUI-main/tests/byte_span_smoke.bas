@@ -4,7 +4,11 @@
     Purpose: Verify exact equality for bounded and unaligned byte spans.
     Responsibilities: Compare the word path with the C library, including every
         changed byte position, short tails, NULs and protected page boundaries.
-    This file contains no renderer, timing benchmark or user file access.
+    This file intentionally does NOT contain:
+        renderer, timing benchmark or user file access.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 #lang "fb"
 #define OMAGUI_IMPLEMENTATION

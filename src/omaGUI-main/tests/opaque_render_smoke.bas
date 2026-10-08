@@ -3,10 +3,14 @@
     File: opaque_render_smoke.bas
     Purpose: Verify skipping painters covered by a later opaque window.
     Responsibilities: Check clipping, ordering, callback lifetime and pixels.
-    This file does not dispatch input or alter application settings.
+    This file intentionally does NOT contain:
+        dispatch input or alter application settings.
 
     Counters and opacity callbacks belong to the test's GUI thread. Results
     are printed after leaving graphics so reporting cannot change the scene.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 #lang "fb"
 #define OMAGUI_IMPLEMENTATION

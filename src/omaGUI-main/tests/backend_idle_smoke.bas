@@ -3,7 +3,11 @@
     File: backend_idle_smoke.bas
     Purpose: Verify that foreground polling waits are bounded and return.
     Responsibilities: Check nonpositive input, a short wait and the upper cap.
-    This file does not render a window or test platform input dispatch.
+    This file intentionally does NOT contain:
+        render a window or test platform input dispatch.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 #lang "fb"
 #include once "../src/backend/backend_idle.bi"

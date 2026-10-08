@@ -19,6 +19,9 @@
 
         - visual screenshot comparisons
         - native window-driver tests
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #lang "fb"

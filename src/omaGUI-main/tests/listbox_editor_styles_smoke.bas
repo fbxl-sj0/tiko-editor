@@ -4,7 +4,11 @@
     Purpose: Check editor list styles alongside the local item model.
     Responsibilities: Exercise checklist row lifetime, table header hits,
         and bounded dropdown presentation in a drawable headless backend.
-    This file intentionally does NOT contain application list policy.
+    This file intentionally does NOT contain:
+        application list policy.
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #lang "fb"

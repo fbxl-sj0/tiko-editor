@@ -18,6 +18,9 @@
 
         - production widget behavior
         - graphics or input setup
+
+    Targets: FreeBASIC fb dialect with the native omaGUI backend.
+    Module API boundary: Standalone development checks for the behavior described above.
 '/
 
 #ifndef __TEST_HARNESS_BI__
